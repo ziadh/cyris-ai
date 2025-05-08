@@ -184,34 +184,22 @@ export default function Home() {
             isDarkTheme
               ? "border-gray-700 bg-gray-800"
               : "border-gray-200 bg-gray-50"
-          } p-4 overflow-y-auto`}
+          } p-4 flex flex-col h-full overflow-y-auto`}
         >
-          <div className="flex items-center justify-between mb-6">
+          {/* Top section: Logo and Title */}
+          <div className="flex items-center mb-6">
             <Image
               src="/icon.png"
               alt="Cyris AI"
               width={32}
               height={32}
-              className="rounded-lg"
+              className="rounded-lg mr-2"
             />
             <h1 className="text-2xl font-bold">Cyris AI</h1>
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-full ${
-                isDarkTheme
-                  ? "bg-gray-700 text-yellow-400"
-                  : "bg-gray-200 text-gray-800"
-              }`}
-            >
-              {isDarkTheme ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
-            </button>
           </div>
 
-          <div className="space-y-2">
+          {/* Chat controls and history - allow this section to grow and scroll */}
+          <div className="space-y-2 flex-grow overflow-y-auto mb-4">
             <button
               className={`w-full py-2 px-4 rounded-lg text-left ${
                 isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
@@ -239,6 +227,24 @@ export default function Home() {
                 {chat.title}
               </div>
             ))}
+          </div>
+
+          {/* Theme toggle button at the bottom right */}
+          <div className="mt-auto flex justify-end">
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-full ${
+                isDarkTheme
+                  ? "bg-gray-700 text-yellow-400"
+                  : "bg-gray-200 text-gray-800"
+              }`}
+            >
+              {isDarkTheme ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
           </div>
         </div>
 
@@ -286,9 +292,9 @@ export default function Home() {
                                 <div className="text-sm opacity-80">
                                   <div className="flex items-center gap-2">
                                     <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                    Sending{" "}
+                                    Forwarding{" "}
                                     <span className="font-bold">
-                                      "{routeInfo.prompt}"
+                                      {routeInfo.prompt}
                                     </span>{" "}
                                     to{" "}
                                     <span className="font-bold flex items-center gap-2">

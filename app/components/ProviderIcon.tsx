@@ -29,7 +29,8 @@ const ProviderIcon: FC<ProviderIconProps> = ({ model, className = "w-4 h-4" }) =
   
   if (!domain) return null;
 
-  const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+  // Use the new API route for favicons
+  const faviconUrl = `/api/favicon/${domain}`;
 
   // Extract width and height from className if provided
   const sizeMatch = className?.match(/w-(\d+)/);
