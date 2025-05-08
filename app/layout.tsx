@@ -11,6 +11,7 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+export const runtime = "edge";
 
 export const metadata: Metadata = {
   title: "Cyris AI",
