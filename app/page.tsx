@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { getBestModel } from "@/lib/ai";
 import { Sun, Moon } from "lucide-react";
 import Image from "next/image";
+import ProviderIcon from "./components/ProviderIcon";
 
 // Add keyframe animation for progress
 const progressAnimation = `@keyframes progress {
@@ -290,7 +291,11 @@ export default function Home() {
                                       "{routeInfo.prompt}"
                                     </span>{" "}
                                     to{" "}
-                                    <span className="font-bold">
+                                    <span className="font-bold flex items-center gap-2">
+                                      <ProviderIcon
+                                        model={routeInfo.model}
+                                        className="w-4 h-4"
+                                      />
                                       {routeInfo.model}
                                     </span>
                                   </div>
