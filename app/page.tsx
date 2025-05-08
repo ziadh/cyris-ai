@@ -8,44 +8,123 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [selectedModel, setSelectedModel] = useState("autopick");
   const [loading, setLoading] = useState(false);
-  const [chatHistory, setChatHistory] = useState<
+  const [currentMessages, setCurrentMessages] = useState<
     { role: string; content: string }[]
   >([]);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
 
-  // Check system preference for theme on initial load
+  // New state variables for multi-chat management
+  const [allChats, setAllChats] = useState<
+    { id: string; title: string; messages: { role: string; content: string }[] }[]
+  >([]);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+
+  // Effect for theme and loading chats from localStorage on initial mount
   useEffect(() => {
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setIsDarkTheme(isDark);
+    // Theme detection
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setIsDarkTheme(prefersDark);
+
+    // Load chats from localStorage
+    const storedChats = localStorage.getItem("cyrisUserChats");
+    if (storedChats) {
+      try {
+        const parsedChats = JSON.parse(storedChats);
+        if (Array.isArray(parsedChats)) {
+          setAllChats(parsedChats);
+          // Optionally, load the last active chat or the newest chat.
+          // For now, we start with a clean slate, user picks or starts new.
+        }
+      } catch (error) {
+        console.error("Failed to parse chats from localStorage:", error);
+        // Clear corrupted data
+        localStorage.removeItem("cyrisUserChats");
+      }
+    }
+    setCurrentMessages([]); // Start with an empty current chat view
+    setActiveChatId(null);   // No active chat selected initially
   }, []);
 
-  async function handleSendMessage() {
-    if (!prompt.trim()) return;
+  // Effect for saving chats to localStorage whenever allChats changes
+  useEffect(() => {
+    // Avoid writing to localStorage on initial empty state if nothing was there before
+    if (allChats.length > 0 || localStorage.getItem("cyrisUserChats")) {
+      localStorage.setItem("cyrisUserChats", JSON.stringify(allChats));
+    }
+  }, [allChats]);
 
-    // Add user message to chat
-    setChatHistory((prev) => [...prev, { role: "user", content: prompt }]);
+  async function handleSendMessage() {
+    const trimmedPrompt = prompt.trim();
+    if (!trimmedPrompt) return;
+
+    const userMessage = { role: "user", content: trimmedPrompt };
+
+    // Update current messages immediately with user's message for responsiveness
+    const updatedCurrentMessagesWithUser = [...currentMessages, userMessage];
+    setCurrentMessages(updatedCurrentMessagesWithUser);
 
     setLoading(true);
-    let modelResponse = "";
+    setPrompt(""); // Clear prompt input after grabbing its value
 
-    if (selectedModel === "autopick") {
-      modelResponse = (await getBestModel(prompt)) || "";
+    let modelResponseContent = "";
+    try {
+      if (selectedModel === "autopick") {
+        modelResponseContent = (await getBestModel(trimmedPrompt)) || "Something went wrong.";
+      } else {
+        // Placeholder for specific model calls
+        modelResponseContent = `Response from ${selectedModel} for: "${trimmedPrompt}" (not implemented yet)`;
+      }
+    } catch (error) {
+      console.error("Error fetching model response:", error);
+      modelResponseContent = "An error occurred while fetching the response.";
+    }
+    
+    const assistantMessage = { role: "assistant", content: modelResponseContent };
+    const finalCurrentMessages = [...updatedCurrentMessagesWithUser, assistantMessage];
+    setCurrentMessages(finalCurrentMessages);
+
+    if (activeChatId) {
+      // Update messages in an existing active chat
+      setAllChats(prevAllChats =>
+        prevAllChats.map(chat =>
+          chat.id === activeChatId
+            ? { ...chat, messages: finalCurrentMessages }
+            : chat
+        )
+      );
     } else {
-      // This is a placeholder - actual implementation would use the selected model
-      modelResponse = `You selected ${selectedModel} (functionality to be implemented)`;
+      // Create a new chat session
+      const newChatId = Date.now().toString();
+      const chatTitle = trimmedPrompt.substring(0, 28) + (trimmedPrompt.length > 28 ? "..." : "");
+      const newChatSession = { id: newChatId, title: chatTitle, messages: finalCurrentMessages };
+      setAllChats(prevAllChats => [newChatSession, ...prevAllChats]); // Add new chat to the beginning
+      setActiveChatId(newChatId); // Set the new chat as active
     }
 
-    // Add AI response to chat
-    setChatHistory((prev) => [
-      ...prev,
-      { role: "assistant", content: modelResponse },
-    ]);
-    setPrompt("");
     setLoading(false);
   }
 
   function toggleTheme() {
-    setIsDarkTheme(!isDarkTheme);
+    setIsDarkTheme(prevIsDarkTheme => {
+      const newTheme = !prevIsDarkTheme;
+      // You could also save this preference to localStorage if desired
+      // localStorage.setItem("cyrisTheme", newTheme ? "dark" : "light");
+      return newTheme;
+    });
+  }
+
+  function handleNewChat() {
+    setCurrentMessages([]);
+    setActiveChatId(null);
+    setPrompt(""); // Clear input field for the new chat
+  }
+
+  function handleSelectChat(chatId: string) {
+    const selectedChat = allChats.find(chat => chat.id === chatId);
+    if (selectedChat) {
+      setActiveChatId(selectedChat.id);
+      setCurrentMessages(selectedChat.messages);
+    }
   }
 
   return (
@@ -72,7 +151,7 @@ export default function Home() {
           />
           <h1 className="text-2xl font-bold">Cyris AI</h1>
           <button
-            onClick={toggleTheme}
+            onClick={handleNewChat}
             className={`p-2 rounded-full ${
               isDarkTheme
                 ? "bg-gray-700 text-yellow-400"
@@ -96,17 +175,16 @@ export default function Home() {
             New Chat
           </button>
 
-          {/* History items */}
-          {chatHistory
-            .filter((msg) => msg.role === "user")
-            .map((msg, idx) => (
+          {/* History items - now lists all chat sessions */}
+          {allChats.map((chat) => (
               <div
-                key={idx}
+                key={chat.id}
+                onClick={() => handleSelectChat(chat.id)}
                 className={`truncate py-2 px-4 rounded-lg cursor-pointer ${
                   isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
-                }`}
+                } ${chat.id === activeChatId ? (isDarkTheme ? "bg-blue-700 text-white" : "bg-blue-200 text-blue-800") : ""} transition-colors`}
               >
-                {msg.content.substring(0, 28)}...
+                {chat.title}
               </div>
             ))}
         </div>
@@ -116,7 +194,7 @@ export default function Home() {
       <div className="flex-1 flex flex-col">
         {/* Chat messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {chatHistory.length === 0 ? (
+          {currentMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center">
               <h2 className="text-3xl font-bold mb-2">Welcome to Cyris AI</h2>
               <p
@@ -128,7 +206,7 @@ export default function Home() {
               </p>
             </div>
           ) : (
-            chatHistory.map((message, idx) => (
+            currentMessages.map((message, idx) => (
               <div
                 key={idx}
                 className={`flex ${

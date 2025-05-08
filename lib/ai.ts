@@ -13,7 +13,7 @@ const openai = new OpenAI({
 
 export async function getBestModel(prompt: string) {
   const completion = await openai.chat.completions.create({
-    model: "deepseek/deepseek-chat-v3-0324:free",
+    model: "openai/gpt-4o-mini",
     messages: [
       {
         role: "system", content: ROUTER_SYSTEM_PROMPT
