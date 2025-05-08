@@ -15,14 +15,20 @@ export default function Home() {
 
   // New state variables for multi-chat management
   const [allChats, setAllChats] = useState<
-    { id: string; title: string; messages: { role: string; content: string }[] }[]
+    {
+      id: string;
+      title: string;
+      messages: { role: string; content: string }[];
+    }[]
   >([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
 
   // Effect for theme and loading chats from localStorage on initial mount
   useEffect(() => {
     // Theme detection
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
     setIsDarkTheme(prefersDark);
 
     // Load chats from localStorage
@@ -42,7 +48,7 @@ export default function Home() {
       }
     }
     setCurrentMessages([]); // Start with an empty current chat view
-    setActiveChatId(null);   // No active chat selected initially
+    setActiveChatId(null); // No active chat selected initially
   }, []);
 
   // Effect for saving chats to localStorage whenever allChats changes
@@ -69,7 +75,8 @@ export default function Home() {
     let modelResponseContent = "";
     try {
       if (selectedModel === "autopick") {
-        modelResponseContent = (await getBestModel(trimmedPrompt)) || "Something went wrong.";
+        modelResponseContent =
+          (await getBestModel(trimmedPrompt)) || "Something went wrong.";
       } else {
         // Placeholder for specific model calls
         modelResponseContent = `Response from ${selectedModel} for: "${trimmedPrompt}" (not implemented yet)`;
@@ -78,15 +85,21 @@ export default function Home() {
       console.error("Error fetching model response:", error);
       modelResponseContent = "An error occurred while fetching the response.";
     }
-    
-    const assistantMessage = { role: "assistant", content: modelResponseContent };
-    const finalCurrentMessages = [...updatedCurrentMessagesWithUser, assistantMessage];
+
+    const assistantMessage = {
+      role: "assistant",
+      content: modelResponseContent,
+    };
+    const finalCurrentMessages = [
+      ...updatedCurrentMessagesWithUser,
+      assistantMessage,
+    ];
     setCurrentMessages(finalCurrentMessages);
 
     if (activeChatId) {
       // Update messages in an existing active chat
-      setAllChats(prevAllChats =>
-        prevAllChats.map(chat =>
+      setAllChats((prevAllChats) =>
+        prevAllChats.map((chat) =>
           chat.id === activeChatId
             ? { ...chat, messages: finalCurrentMessages }
             : chat
@@ -95,9 +108,15 @@ export default function Home() {
     } else {
       // Create a new chat session
       const newChatId = Date.now().toString();
-      const chatTitle = trimmedPrompt.substring(0, 28) + (trimmedPrompt.length > 28 ? "..." : "");
-      const newChatSession = { id: newChatId, title: chatTitle, messages: finalCurrentMessages };
-      setAllChats(prevAllChats => [newChatSession, ...prevAllChats]); // Add new chat to the beginning
+      const chatTitle =
+        trimmedPrompt.substring(0, 28) +
+        (trimmedPrompt.length > 28 ? "..." : "");
+      const newChatSession = {
+        id: newChatId,
+        title: chatTitle,
+        messages: finalCurrentMessages,
+      };
+      setAllChats((prevAllChats) => [newChatSession, ...prevAllChats]); // Add new chat to the beginning
       setActiveChatId(newChatId); // Set the new chat as active
     }
 
@@ -105,7 +124,7 @@ export default function Home() {
   }
 
   function toggleTheme() {
-    setIsDarkTheme(prevIsDarkTheme => {
+    setIsDarkTheme((prevIsDarkTheme) => {
       const newTheme = !prevIsDarkTheme;
       // You could also save this preference to localStorage if desired
       // localStorage.setItem("cyrisTheme", newTheme ? "dark" : "light");
@@ -120,7 +139,7 @@ export default function Home() {
   }
 
   function handleSelectChat(chatId: string) {
-    const selectedChat = allChats.find(chat => chat.id === chatId);
+    const selectedChat = allChats.find((chat) => chat.id === chatId);
     if (selectedChat) {
       setActiveChatId(selectedChat.id);
       setCurrentMessages(selectedChat.messages);
@@ -171,22 +190,29 @@ export default function Home() {
             className={`w-full py-2 px-4 rounded-lg text-left ${
               isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
             } transition-colors`}
+            onClick={handleNewChat}
           >
             New Chat
           </button>
 
           {/* History items - now lists all chat sessions */}
           {allChats.map((chat) => (
-              <div
-                key={chat.id}
-                onClick={() => handleSelectChat(chat.id)}
-                className={`truncate py-2 px-4 rounded-lg cursor-pointer ${
-                  isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
-                } ${chat.id === activeChatId ? (isDarkTheme ? "bg-blue-700 text-white" : "bg-blue-200 text-blue-800") : ""} transition-colors`}
-              >
-                {chat.title}
-              </div>
-            ))}
+            <div
+              key={chat.id}
+              onClick={() => handleSelectChat(chat.id)}
+              className={`truncate py-2 px-4 rounded-lg cursor-pointer ${
+                isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
+              } ${
+                chat.id === activeChatId
+                  ? isDarkTheme
+                    ? "bg-blue-700 text-white"
+                    : "bg-blue-200 text-blue-800"
+                  : ""
+              } transition-colors`}
+            >
+              {chat.title}
+            </div>
+          ))}
         </div>
       </div>
 
