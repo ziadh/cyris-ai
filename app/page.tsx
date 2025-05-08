@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { getBestModel } from "@/lib/ai";
 import { Sun, Moon } from "lucide-react";
+import Image from "next/image";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
@@ -62,6 +63,13 @@ export default function Home() {
         } p-4 overflow-y-auto`}
       >
         <div className="flex items-center justify-between mb-6">
+          <Image
+            src="/icon.png"
+            alt="Cyris AI"
+            width={32}
+            height={32}
+            className="rounded-lg"
+          />
           <h1 className="text-2xl font-bold">Cyris AI</h1>
           <button
             onClick={toggleTheme}
