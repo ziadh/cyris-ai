@@ -7,7 +7,7 @@ export async function GET(
   const domain = context.params.domain;
 
   if (!domain) {
-    return new NextResponse("Domain parameter is required", { status: 400 });
+    return new NextResponse("Domain parameter is required", { status: 400 }); 
   }
 
   const faviconServiceUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
