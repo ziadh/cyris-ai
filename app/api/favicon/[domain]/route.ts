@@ -2,9 +2,9 @@ import { NextResponse, NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { domain: string } }
+  context: { params: { domain: string } }
 ) {
-  const domain = params.domain;
+  const domain = context.params.domain;
 
   if (!domain) {
     return new NextResponse("Domain parameter is required", { status: 400 });
