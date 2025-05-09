@@ -1,13 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { domain: string } }
-) {
+export async function GET({ params }: { params: { domain: string } }) {
   const domain = params.domain;
 
   if (!domain) {
-    return new NextResponse('Domain parameter is required', { status: 400 });
+    return new NextResponse("Domain parameter is required", { status: 400 });
   }
 
   const faviconServiceUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
@@ -20,24 +17,25 @@ export async function GET(
     });
 
     if (!imageResponse.ok) {
-      return new NextResponse('Failed to fetch favicon from upstream service', {
+      return new NextResponse("Failed to fetch favicon from upstream service", {
         status: imageResponse.status,
       });
     }
 
     const imageBlob = await imageResponse.blob();
-    const contentType = imageResponse.headers.get('Content-Type') || 'image/png';
+    const contentType =
+      imageResponse.headers.get("Content-Type") || "image/png";
 
     const headers = new Headers();
-    headers.set('Content-Type', contentType);
+    headers.set("Content-Type", contentType);
     headers.set(
-      'Cache-Control',
+      "Cache-Control",
       `public, max-age=${fourWeeksInSeconds}, stale-while-revalidate=${fourWeeksInSeconds}`
     );
 
     return new NextResponse(imageBlob, { status: 200, headers });
   } catch (error) {
-    console.error('Error fetching favicon:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error("Error fetching favicon:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
-} 
+}
