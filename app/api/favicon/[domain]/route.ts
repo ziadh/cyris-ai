@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-type Props = {
-  params: {
-    domain: string;
-  };
-};
-
 export async function GET(
   request: NextRequest,
-  context: Props
+  { params }: { params: { domain: string } }
 ) {
-  const domain = context.params.domain;
+  const domain = params.domain;
 
   if (!domain) {
     return new NextResponse('Domain parameter is required', { status: 400 });
