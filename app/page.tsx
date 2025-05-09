@@ -1,15 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { getBestModel } from "@/lib/ai";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import ProviderIcon from "./components/ProviderIcon";
-
-// Add keyframe animation for progress
-const progressAnimation = `@keyframes progress {
-  0% { width: 0% }
-  100% { width: 100% }
-}`;
 
 // Utility function to parse routing format
 function parseRoutePrompt(content: string) {
@@ -30,6 +24,7 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [selectedModel, setSelectedModel] = useState("autopick");
   const [loading, setLoading] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [currentMessages, setCurrentMessages] = useState<
     { role: string; content: string }[]
   >([]);
@@ -37,6 +32,7 @@ export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // New state variables for multi-chat management
   const [allChats, setAllChats] = useState<
@@ -106,6 +102,26 @@ export default function Home() {
       localStorage.setItem("cyrisUserChats", JSON.stringify(allChats));
     }
   }, [allChats]);
+
+  // Effect for handling clicks outside the dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   async function handleSendMessage() {
     const trimmedPrompt = prompt.trim();
@@ -205,9 +221,6 @@ export default function Home() {
 
   return (
     <>
-      <style jsx global>{`
-        ${progressAnimation}
-      `}</style>
       <div
         className={`flex h-screen ${
           isDarkTheme ? "bg-gray-900 text-white" : "bg-white text-gray-900"
@@ -345,14 +358,14 @@ export default function Home() {
                       p-2.5 text-sm
                       sm:p-3 sm:text-base
                       ${
-                      message.role === "user"
-                        ? isDarkTheme
-                          ? "bg-blue-600 text-white"
-                          : "bg-blue-500 text-white"
-                        : isDarkTheme
-                        ? "bg-gray-800 text-white"
-                        : "bg-gray-200 text-gray-900"
-                    }`}
+                        message.role === "user"
+                          ? isDarkTheme
+                            ? "bg-blue-600 text-white"
+                            : "bg-blue-500 text-white"
+                          : isDarkTheme
+                          ? "bg-gray-800 text-white"
+                          : "bg-gray-200 text-gray-900"
+                      }`}
                   >
                     {message.role === "assistant" ? (
                       <>
@@ -420,23 +433,95 @@ export default function Home() {
           >
             {/* New layout: Model select button, input, send button in a row */}
             <div className="flex items-center space-x-2">
-              <select
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                // Style as a button, auto width for content
-                className={`w-auto px-3 py-2.5 rounded-md text-sm sm:text-base font-medium ${
-                  isDarkTheme
-                    ? "bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
-                    : "bg-gray-200 hover:bg-gray-300 text-gray-900 border-gray-300"
-                } border focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none`}
-              >
-                <option value="autopick">AutoPick</option>
-                <option value="openai/o4-mini-high">GPT 4o</option>
-                <option value="google/gemini-2.5-flash-preview">
-                  Gemini 2.5
-                </option>
-                <option value="anthropic/claude-3.5-sonnet">Claude 3.5</option>
-              </select>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className={`w-auto flex items-center gap-2 pr-8 pl-3 py-2.5 rounded-md text-sm sm:text-base font-medium ${
+                    isDarkTheme
+                      ? "bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+                      : "bg-gray-200 hover:bg-gray-300 text-gray-900 border-gray-300"
+                  } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                >
+                  {selectedModel === "autopick" ? (
+                    <span>✨ AutoPick</span>
+                  ) : (
+                    <>
+                      <ProviderIcon model={selectedModel} className="w-4 h-4" />
+                      {selectedModel === "openai/o4-mini-high" && "GPT 4o"}
+                      {selectedModel === "google/gemini-2.5-flash-preview" && "Gemini 2.5"}
+                      {selectedModel === "anthropic/claude-3.5-sonnet" && "Claude 3.5"}
+                    </>
+                  )}
+                </button>
+                <ChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 ${
+                  isDarkTheme ? "text-gray-400" : "text-gray-600"
+                } pointer-events-none transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                
+                {isDropdownOpen && (
+                  <div className={`absolute z-50 bottom-full mb-1 w-full rounded-md shadow-lg ${
+                    isDarkTheme ? "bg-gray-700 border-gray-600" : "bg-white border-gray-200"
+                  } border transform origin-bottom transition-all duration-200 ease-out`}>
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setSelectedModel("autopick");
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${
+                          isDarkTheme
+                            ? "hover:bg-gray-600 text-white"
+                            : "hover:bg-gray-100 text-gray-900"
+                        }`}
+                      >
+                        <span>✨</span>
+                        <span>AutoPick</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedModel("openai/o4-mini-high");
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${
+                          isDarkTheme
+                            ? "hover:bg-gray-600 text-white"
+                            : "hover:bg-gray-100 text-gray-900"
+                        }`}
+                      >
+                        <ProviderIcon model="openai/o4-mini-high" className="w-4 h-4" />
+                        <span>GPT 4o</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedModel("google/gemini-2.5-flash-preview");
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${
+                          isDarkTheme
+                            ? "hover:bg-gray-600 text-white"
+                            : "hover:bg-gray-100 text-gray-900"
+                        }`}
+                      >
+                        <ProviderIcon model="google/gemini-2.5-flash-preview" className="w-4 h-4" />
+                        <span>Gemini 2.5</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedModel("anthropic/claude-3.5-sonnet");
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${
+                          isDarkTheme
+                            ? "hover:bg-gray-600 text-white"
+                            : "hover:bg-gray-100 text-gray-900"
+                        }`}
+                      >
+                        <ProviderIcon model="anthropic/claude-3.5-sonnet" className="w-4 h-4" />
+                        <span>Claude 3.5</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div className="flex-1 relative">
                 <input
