@@ -1,36 +1,39 @@
-import { FC } from 'react';
-import Image from 'next/image';
+import { FC } from "react";
+import Image from "next/image";
 
 interface ProviderIconProps {
   model: string;
   className?: string;
 }
 
-const ProviderIcon: FC<ProviderIconProps> = ({ model, className = "w-4 h-4" }) => {
+const ProviderIcon: FC<ProviderIconProps> = ({
+  model,
+  className = "w-4 h-4",
+}) => {
   // Helper function to determine provider and domain from model string
-  const getProviderInfo = (model: string): { provider: string; domain: string } => {
-    const [provider] = model.split('/');
+  const getProviderInfo = (
+    model: string
+  ): { provider: string; domain: string } => {
+    const [provider] = model.split("/");
     const providerLower = provider.toLowerCase();
-    
+
     const domainMap: { [key: string]: string } = {
-      'openai': 'chatgpt.com',
-      'anthropic': 'claude.ai',
-      'google': 'gemini.google.com',
+      openai: "/assets/gpt.png",
+      anthropic: "/assets/claude.png",
+      google: "/assets/gemini.png",
       // Add more providers as needed
     };
 
     return {
       provider: providerLower,
-      domain: domainMap[providerLower] || ''
+      domain: domainMap[providerLower] || "",
     };
   };
 
   const { domain } = getProviderInfo(model);
-  
+
   if (!domain) return null;
 
-  // Use the new API route for favicons
-  const faviconUrl = `/api/favicon/${domain}`;
 
   // Extract width and height from className if provided
   const sizeMatch = className?.match(/w-(\d+)/);
@@ -38,7 +41,7 @@ const ProviderIcon: FC<ProviderIconProps> = ({ model, className = "w-4 h-4" }) =
 
   return (
     <Image
-      src={faviconUrl}
+      src={domain}
       alt="Provider Icon"
       width={size}
       height={size}
@@ -47,4 +50,4 @@ const ProviderIcon: FC<ProviderIconProps> = ({ model, className = "w-4 h-4" }) =
   );
 };
 
-export default ProviderIcon; 
+export default ProviderIcon;
