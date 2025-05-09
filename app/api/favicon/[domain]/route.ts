@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
-export async function GET({ params }: { params: { domain: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { domain: string } }
+) {
   const domain = params.domain;
 
   if (!domain) {
@@ -8,12 +11,11 @@ export async function GET({ params }: { params: { domain: string } }) {
   }
 
   const faviconServiceUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-  // Cache for 4 weeks (4 * 7 * 24 * 60 * 60 = 2419200 seconds)
   const fourWeeksInSeconds = 2419200;
 
   try {
     const imageResponse = await fetch(faviconServiceUrl, {
-      next: { revalidate: fourWeeksInSeconds }, // Server-side cache for our fetch
+      next: { revalidate: fourWeeksInSeconds },
     });
 
     if (!imageResponse.ok) {
