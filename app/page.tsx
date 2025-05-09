@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getBestModel } from "@/lib/ai";
 import { Sun, Moon } from "lucide-react";
 import Image from "next/image";
@@ -34,6 +34,9 @@ export default function Home() {
     { role: string; content: string }[]
   >([]);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   // New state variables for multi-chat management
   const [allChats, setAllChats] = useState<
@@ -72,6 +75,29 @@ export default function Home() {
     setCurrentMessages([]); // Start with an empty current chat view
     setActiveChatId(null); // No active chat selected initially
   }, []);
+
+  // Effect to handle clicks outside the sidebar to close it
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node)
+      ) {
+        // Check if window width is less than md breakpoint (768px typical)
+        if (window.innerWidth < 768) {
+          setIsSidebarOpen(false);
+        }
+      }
+    }
+
+    if (isSidebarOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSidebarOpen]); // Re-run if isSidebarOpen changes
 
   // Effect for saving chats to localStorage whenever allChats changes
   useEffect(() => {
@@ -154,6 +180,10 @@ export default function Home() {
     });
   }
 
+  function toggleSidebar() {
+    setIsSidebarOpen(!isSidebarOpen);
+  }
+
   function handleNewChat() {
     setCurrentMessages([]);
     setActiveChatId(null);
@@ -165,6 +195,11 @@ export default function Home() {
     if (selectedChat) {
       setActiveChatId(selectedChat.id);
       setCurrentMessages(selectedChat.messages);
+      // Collapse sidebar on mobile after selecting a chat
+      if (window.innerWidth < 768) {
+        // 768px is a common breakpoint for 'md'
+        setIsSidebarOpen(false);
+      }
     }
   }
 
@@ -180,11 +215,14 @@ export default function Home() {
       >
         {/* Left sidebar - Chat history */}
         <div
-          className={`w-[12.5%] border-r ${
+          ref={sidebarRef}
+          className={`fixed inset-y-0 left-0 z-30 w-64 p-4 transform ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:w-[20%] lg:w-[15%] border-r ${
             isDarkTheme
               ? "border-gray-700 bg-gray-800"
               : "border-gray-200 bg-gray-50"
-          } p-4 flex flex-col h-full overflow-y-auto`}
+          } flex flex-col h-full overflow-y-auto`}
         >
           {/* Top section: Logo and Title */}
           <div className="flex items-center mb-6">
@@ -250,13 +288,44 @@ export default function Home() {
 
         {/* Main chat area */}
         <div className="flex-1 flex flex-col">
+          {/* Header for mobile with Menu button */}
+          <div className="md:hidden p-4 flex justify-between items-center border-b border-gray-700">
+            <button onClick={toggleSidebar} className="p-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                />
+              </svg>
+            </button>
+            <Image
+              src="/icon.png"
+              alt="Cyris AI"
+              width={32}
+              height={32}
+              className="rounded-lg mr-2"
+            />
+            <h1 className="text-2xl font-bold">Cyris AI</h1>
+            <div className="w-6"></div> {/* Placeholder for balance */}
+          </div>
+
           {/* Chat messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-4">
             {currentMessages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center">
-                <h2 className="text-3xl font-bold mb-2">Welcome to Cyris AI</h2>
+              <div className="h-full flex flex-col items-center justify-center text-center p-4">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+                  Welcome to Cyris AI
+                </h2>
                 <p
-                  className={`text-lg ${
+                  className={`text-base sm:text-lg ${
                     isDarkTheme ? "text-gray-400" : "text-gray-500"
                   }`}
                 >
@@ -272,7 +341,10 @@ export default function Home() {
                   }`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
+                    className={`inline-block rounded-lg
+                      p-2.5 text-sm
+                      sm:p-3 sm:text-base
+                      ${
                       message.role === "user"
                         ? isDarkTheme
                           ? "bg-blue-600 text-white"
@@ -288,24 +360,20 @@ export default function Home() {
                           const routeInfo = parseRoutePrompt(message.content);
                           if (routeInfo.isRouting) {
                             return (
-                              <div className="flex flex-col gap-2">
-                                <div className="text-sm opacity-80">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                    Forwarding{" "}
-                                    <span className="font-bold">
-                                      {routeInfo.prompt}
-                                    </span>{" "}
-                                    to{" "}
-                                    <span className="font-bold flex items-center gap-2">
-                                      <ProviderIcon
-                                        model={routeInfo.model}
-                                        className="w-4 h-4"
-                                      />
-                                      {routeInfo.model}
-                                    </span>
-                                  </div>
-                                </div>
+                              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm sm:text-base opacity-90">
+                                <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0"></div>
+                                <span>Forwarding</span>
+                                <span className="font-semibold break-all">
+                                  &ldquo;{routeInfo.prompt}&rdquo;
+                                </span>
+                                <span>to</span>
+                                <span className="font-semibold flex items-center gap-1 shrink-0">
+                                  <ProviderIcon
+                                    model={routeInfo.model}
+                                    className="w-3.5 h-3.5"
+                                  />
+                                  {routeInfo.model}
+                                </span>
                               </div>
                             );
                           }
@@ -322,7 +390,7 @@ export default function Home() {
             {loading && (
               <div className="flex justify-start">
                 <div
-                  className={`max-w-[70%] rounded-lg p-3 ${
+                  className={`inline-block rounded-lg p-3 ${
                     isDarkTheme ? "bg-gray-800" : "bg-gray-200"
                   }`}
                 >
@@ -344,30 +412,30 @@ export default function Home() {
 
           {/* Input area */}
           <div
-            className={`p-4 border-t ${
+            className={`p-3 sm:p-4 border-t ${
               isDarkTheme
                 ? "border-gray-700 bg-gray-800"
                 : "border-gray-200 bg-gray-100"
             }`}
           >
+            {/* New layout: Model select button, input, send button in a row */}
             <div className="flex items-center space-x-2">
               <select
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
-                className={`px-3 py-2 rounded-md ${
+                // Style as a button, auto width for content
+                className={`w-auto px-3 py-2.5 rounded-md text-sm sm:text-base font-medium ${
                   isDarkTheme
-                    ? "bg-gray-700 text-white border-gray-600"
-                    : "bg-white text-gray-900 border-gray-300"
-                } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    ? "bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-900 border-gray-300"
+                } border focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none`}
               >
                 <option value="autopick">AutoPick</option>
                 <option value="openai/o4-mini-high">GPT 4o</option>
                 <option value="google/gemini-2.5-flash-preview">
-                  Gemini 2.5 Flash
+                  Gemini 2.5
                 </option>
-                <option value="anthropic/claude-3.5-sonnet">
-                  Claude 3.5 Sonnet
-                </option>
+                <option value="anthropic/claude-3.5-sonnet">Claude 3.5</option>
               </select>
 
               <div className="flex-1 relative">
@@ -377,10 +445,10 @@ export default function Home() {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                  className={`w-full px-4 py-2 rounded-md ${
+                  className={`w-full px-3 sm:px-4 py-2.5 rounded-md text-sm sm:text-base ${
                     isDarkTheme
-                      ? "bg-gray-700 text-white border-gray-600"
-                      : "bg-white text-gray-900 border-gray-300"
+                      ? "bg-gray-700 text-white border-gray-600 placeholder-gray-400"
+                      : "bg-white text-gray-900 border-gray-300 placeholder-gray-500"
                   } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
               </div>
@@ -388,19 +456,20 @@ export default function Home() {
               <button
                 onClick={handleSendMessage}
                 disabled={loading || !prompt.trim()}
-                className={`p-2 rounded-md ${
+                // Small icon button
+                className={`p-2.5 rounded-md ${
                   loading || !prompt.trim()
                     ? isDarkTheme
-                      ? "bg-gray-700 text-gray-500"
-                      : "bg-gray-200 text-gray-400"
+                      ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : isDarkTheme
-                    ? "bg-blue-600 text-white"
-                    : "bg-blue-500 text-white"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-blue-500 hover:bg-blue-600 text-white"
                 } transition-colors`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
+                  className="h-5 w-5" // Consistent small icon
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
