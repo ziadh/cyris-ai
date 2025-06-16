@@ -1,6 +1,7 @@
 "use client";
 import { Sun, Moon } from "lucide-react";
 import Image from "next/image";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 interface ChatSidebarProps {
   isDarkTheme: boolean;
@@ -27,6 +28,8 @@ export default function ChatSidebar({
   sidebarRef,
   isSidebarOpen,
 }: ChatSidebarProps) {
+  const { data: session } = useSession();
+
   return (
     <div
       ref={sidebarRef}
@@ -81,8 +84,35 @@ export default function ChatSidebar({
         ))}
       </div>
 
-      {/* Theme toggle button */}
-      <div className="mt-auto flex justify-end">
+      {/* Theme toggle and auth */}
+      <div className="mt-auto flex justify-between items-center">
+        <div>
+          {session ? (
+            <div className="flex items-center gap-2">
+              {session.user?.image && (
+                <Image
+                  src={session.user.image}
+                  alt={session.user.name || "User"}
+                  width={32}
+                  height={32}
+                  className="rounded-full cursor-pointer"
+                  onClick={() => signOut()}
+                />
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => signIn("google")}
+              className={`px-4 py-2 rounded-lg ${
+                isDarkTheme
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-blue-500 hover:bg-blue-600"
+              } text-white transition-colors`}
+            >
+              Sign In
+            </button>
+          )}
+        </div>
         <button
           onClick={toggleTheme}
           className={`p-2 rounded-full ${
@@ -100,4 +130,4 @@ export default function ChatSidebar({
       </div>
     </div>
   );
-} 
+}
