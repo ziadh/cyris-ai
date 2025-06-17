@@ -40,7 +40,9 @@ Routing rules:
 Respond with **only** the tool syntax with the chosen model ID (for example: "<routePrompt prompt="…" model="google/gemini-2.5-flash-preview-05-20"/>"), and the query itself.
 
 Here’s an example:
-<routePrompt prompt="Translate this Spanish document and annotate key legal terms" model="openai/gpt-4o"/>
+<routePrompt prompt="Translate this Spanish document" model="openai/gpt-4o-mini"/>
+
+CRITICAL: Do NOT enhance, rephrase, or modify the user's original prompt. Use their EXACT words in the prompt field.
 
 Be sure to follow the tool syntax strictly and do not add any other text or characters. Also be sure to replace the MODEL_ID and PROMPT with the actual model ID and prompt you received from the user.
 
