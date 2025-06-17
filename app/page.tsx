@@ -161,8 +161,8 @@ export default function Home() {
     // Immediately show the user message
     setCurrentMessages(messages => [...messages, userMessage]);
     
-    // First show "Selecting model..."
     if (selectedModel === "autopick") {
+      // Show "Selecting model..." for autopick
       setForwardingMessage({
         role: "assistant",
         content: `<routePrompt prompt="${trimmedPrompt}" model="Selecting model..."/>`,
@@ -179,16 +179,13 @@ export default function Home() {
         } catch (error) {
           setForwardingMessage({
             role: "assistant",
-            content: `<routePrompt prompt="${trimmedPrompt}" model="GPT-4"/>`,
+            content: `<routePrompt prompt="${trimmedPrompt}" model="openai/gpt-4o-mini"/>`,
           });
         }
       }, 200);
     } else {
-      // Direct model selection
-      setForwardingMessage({
-        role: "assistant",
-        content: `<routePrompt prompt="${trimmedPrompt}" model="${selectedModel}"/>`,
-      });
+      // Direct model selection - no forwarding message needed, just loading state
+      setForwardingMessage(null);
     }
     
     setPrompt("");
@@ -242,7 +239,7 @@ export default function Home() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ chatId: currentChatId, messageContent: trimmedPrompt }),
+          body: JSON.stringify({ chatId: currentChatId, messageContent: trimmedPrompt, selectedModel }),
         });
 
         if (!response.ok) {
