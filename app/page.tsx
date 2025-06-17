@@ -6,6 +6,8 @@ import ChatSidebar from "../components/ChatSidebar";
 import ChatMessages from "../components/ChatMessages";
 import ChatInput from "../components/ChatInput";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { ChatService, ChatData } from "@/lib/chatService";
 
 // Utility function to parse routing format
 function parseRoutePrompt(content: string) {
@@ -25,6 +27,7 @@ function parseRoutePrompt(content: string) {
 export default function Home() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
 
   const [prompt, setPrompt] = useState("");
   const [selectedModel, setSelectedModel] = useState("autopick");
@@ -40,58 +43,47 @@ export default function Home() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // State for multi-chat management
-  const [allChats, setAllChats] = useState<
-    {
-      id: string;
-      title: string;
-      messages: { role: string; content: string }[];
-    }[]
-  >([]);
+  const [allChats, setAllChats] = useState<ChatData[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Effect for theme and loading chats from localStorage
+  // Effect for setting authentication status
+  useEffect(() => {
+    setIsAuthenticated(!!session?.user);
+  }, [session]);
+
+  // Effect for theme and loading chats
   useEffect(() => {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     setIsDarkTheme(prefersDark);
 
-    const storedChats = localStorage.getItem("cyrisUserChats");
-    if (storedChats) {
-      try {
-        const parsedChats = JSON.parse(storedChats);
-        if (Array.isArray(parsedChats)) {
-          setAllChats(parsedChats);
+    async function loadChats() {
+      if (status === "loading") return;
+      
+      const authenticated = !!session?.user;
+      
+      if (authenticated && !isAuthenticated) {
+        await ChatService.migrateLocalChatsToDatabase();
+      }
+      
+      const chats = await ChatService.getChats(authenticated);
+      setAllChats(chats);
+      
+      const chatIdFromParams = searchParams.get("chatId");
+      if (chatIdFromParams) {
+        const chatToLoad = chats.find((chat) => chat.id === chatIdFromParams);
+        if (chatToLoad) {
+          setActiveChatId(chatToLoad.id);
+          setCurrentMessages(chatToLoad.messages);
         }
-      } catch (error) {
-        console.error("Failed to parse chats from localStorage:", error);
-        localStorage.removeItem("cyrisUserChats");
+      } else {
+        setCurrentMessages([]);
+        setActiveChatId(null);
       }
     }
-    setCurrentMessages([]);
-    setActiveChatId(null);
 
-    const chatIdFromParams = searchParams.get("chatId");
-    if (chatIdFromParams) {
-      const storedChats = localStorage.getItem("cyrisUserChats");
-      if (storedChats) {
-        try {
-          const parsedChats = JSON.parse(storedChats);
-          if (Array.isArray(parsedChats)) {
-            setAllChats(parsedChats);
-            const chatToLoad = parsedChats.find(
-              (chat) => chat.id === chatIdFromParams
-            );
-            if (chatToLoad) {
-              setActiveChatId(chatToLoad.id);
-              setCurrentMessages(chatToLoad.messages);
-            }
-          }
-        } catch (error) {
-          console.error("Failed to parse chats from localStorage:", error);
-          localStorage.removeItem("cyrisUserChats");
-        }
-      }
-    }
-  }, [searchParams]);
+    loadChats();
+  }, [session, status, searchParams, isAuthenticated]);
 
   // Effect for handling clicks outside the sidebar
   useEffect(() => {
@@ -115,12 +107,6 @@ export default function Home() {
     };
   }, [isSidebarOpen]);
 
-  // Effect for saving chats to localStorage
-  useEffect(() => {
-    if (allChats.length > 0 || localStorage.getItem("cyrisUserChats")) {
-      localStorage.setItem("cyrisUserChats", JSON.stringify(allChats));
-    }
-  }, [allChats]);
 
   // Effect for handling clicks outside the dropdown
   useEffect(() => {
@@ -177,13 +163,18 @@ export default function Home() {
     setCurrentMessages(finalCurrentMessages);
 
     if (activeChatId) {
-      setAllChats((prevAllChats) =>
-        prevAllChats.map((chat) =>
-          chat.id === activeChatId
-            ? { ...chat, messages: finalCurrentMessages }
-            : chat
-        )
+      const updatedChat = await ChatService.updateChat(
+        activeChatId,
+        finalCurrentMessages,
+        isAuthenticated
       );
+      if (updatedChat) {
+        setAllChats((prevAllChats) =>
+          prevAllChats.map((chat) =>
+            chat.id === activeChatId ? updatedChat : chat
+          )
+        );
+      }
     } else {
       const newChatId = Date.now().toString();
       const chatTitle =
@@ -194,9 +185,13 @@ export default function Home() {
         title: chatTitle,
         messages: finalCurrentMessages,
       };
-      setAllChats((prevAllChats) => [newChatSession, ...prevAllChats]);
-      setActiveChatId(newChatId);
-      router.replace(`/?chatId=${newChatId}`);
+      
+      const savedChat = await ChatService.saveChat(newChatSession, isAuthenticated);
+      if (savedChat) {
+        setAllChats((prevAllChats) => [savedChat, ...prevAllChats]);
+        setActiveChatId(newChatId);
+        router.replace(`/?chatId=${newChatId}`);
+      }
     }
 
     setLoading(false);
