@@ -5,6 +5,7 @@ import Image from "next/image";
 import ChatSidebar from "../components/ChatSidebar";
 import ChatMessages from "../components/ChatMessages";
 import ChatInput from "../components/ChatInput";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Utility function to parse routing format
 function parseRoutePrompt(content: string) {
@@ -22,6 +23,9 @@ function parseRoutePrompt(content: string) {
 }
 
 export default function Home() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [prompt, setPrompt] = useState("");
   const [selectedModel, setSelectedModel] = useState("autopick");
   const [loading, setLoading] = useState(false);
@@ -64,7 +68,30 @@ export default function Home() {
     }
     setCurrentMessages([]);
     setActiveChatId(null);
-  }, []);
+
+    const chatIdFromParams = searchParams.get("chatId");
+    if (chatIdFromParams) {
+      const storedChats = localStorage.getItem("cyrisUserChats");
+      if (storedChats) {
+        try {
+          const parsedChats = JSON.parse(storedChats);
+          if (Array.isArray(parsedChats)) {
+            setAllChats(parsedChats);
+            const chatToLoad = parsedChats.find(
+              (chat) => chat.id === chatIdFromParams
+            );
+            if (chatToLoad) {
+              setActiveChatId(chatToLoad.id);
+              setCurrentMessages(chatToLoad.messages);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to parse chats from localStorage:", error);
+          localStorage.removeItem("cyrisUserChats");
+        }
+      }
+    }
+  }, [searchParams]);
 
   // Effect for handling clicks outside the sidebar
   useEffect(() => {
@@ -196,6 +223,7 @@ export default function Home() {
       if (window.innerWidth < 768) {
         setIsSidebarOpen(false);
       }
+      router.replace(`/?chatId=${chatId}`);
     }
   }
 
