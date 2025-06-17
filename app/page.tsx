@@ -8,21 +8,7 @@ import ChatInput from "../components/ChatInput";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ChatService, ChatData } from "@/lib/chatService";
-
-// Utility function to parse routing format
-function parseRoutePrompt(content: string) {
-  const match = content.match(
-    /<routePrompt prompt\s*=\s*"([^"]*)" model\s*=\s*"([^"]*)"\s*\/>/
-  );
-  if (match) {
-    return {
-      isRouting: true,
-      prompt: match[1],
-      model: match[2],
-    }; 
-  }
-  return { isRouting: false, prompt: "", model: "" };
-}
+import { parseRoutePrompt } from "@/lib/utils";
 
 export default function Home() {
   const router = useRouter();
@@ -34,7 +20,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [currentMessages, setCurrentMessages] = useState<
-    { role: string; content: string }[]
+    { role: string; content: string; modelId?: string }[]
   >([]);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -136,65 +122,95 @@ export default function Home() {
     const updatedCurrentMessagesWithUser = [...currentMessages, userMessage];
     setCurrentMessages(updatedCurrentMessagesWithUser);
 
-    setLoading(true);
     setPrompt("");
 
-    let modelResponseContent = "";
-    try {
-      if (selectedModel === "autopick") {
-        modelResponseContent =
-          (await getBestModel(trimmedPrompt)) || "Something went wrong.";
-      } else {
-        modelResponseContent = `Response from ${selectedModel} for: "${trimmedPrompt}" (not implemented yet)`;
-      }
-    } catch (error) {
-      console.error("Error fetching model response:", error);
-      modelResponseContent = "An error occurred while fetching the response.";
-    }
-
-    const assistantMessage = {
+    // Add an intermediate "Forwarding..." message
+    const forwardingMessage = {
       role: "assistant",
-      content: modelResponseContent,
+      content: `<routePrompt prompt="${trimmedPrompt}" model="AutoPick"/>`, // Use a placeholder model name for display
     };
-    const finalCurrentMessages = [
-      ...updatedCurrentMessagesWithUser,
-      assistantMessage,
-    ];
-    setCurrentMessages(finalCurrentMessages);
+    setCurrentMessages([...updatedCurrentMessagesWithUser, forwardingMessage]);
 
-    if (activeChatId) {
-      const updatedChat = await ChatService.updateChat(
-        activeChatId,
-        finalCurrentMessages,
-        isAuthenticated
-      );
-      if (updatedChat) {
-        setAllChats((prevAllChats) =>
-          prevAllChats.map((chat) =>
-            chat.id === activeChatId ? updatedChat : chat
-          )
+    setLoading(true); // Move this line here
+
+
+    try {
+      let currentChatId = activeChatId;
+
+      // If no active chat, create a new one first
+      if (!currentChatId) {
+        const newChatId = Date.now().toString();
+        const chatTitle =
+          trimmedPrompt.substring(0, 28) +
+          (trimmedPrompt.length > 28 ? "..." : "");
+        const newChatSession = {
+          id: newChatId,
+          title: chatTitle,
+          messages: [userMessage], // Include the initial user message
+        };
+
+        const savedChat = await ChatService.saveChat(newChatSession, isAuthenticated);
+        if (savedChat) {
+          setAllChats((prevAllChats) => [savedChat, ...prevAllChats]);
+          setActiveChatId(newChatId);
+          router.replace(`/?chatId=${newChatId}`);
+          currentChatId = newChatId;
+        } else {
+          throw new Error("Failed to save new chat.");
+        }
+      } else {
+         // If active chat exists, update it with the user message immediately
+         const updatedChatWithUserMessage = await ChatService.updateChat(
+          currentChatId,
+          updatedCurrentMessagesWithUser, // Use the state before adding forwardingMessage
+          isAuthenticated
         );
+        if (updatedChatWithUserMessage) {
+          setAllChats((prevAllChats) =>
+            prevAllChats.map((chat) =>
+              chat.id === currentChatId ? updatedChatWithUserMessage : chat
+            )
+          );
+          // Removed premature setCurrentMessages update
+        } else {
+          throw new Error("Failed to update chat with user message.");
+        }
       }
-    } else {
-      const newChatId = Date.now().toString();
-      const chatTitle =
-        trimmedPrompt.substring(0, 28) +
-        (trimmedPrompt.length > 28 ? "..." : "");
-      const newChatSession = {
-        id: newChatId,
-        title: chatTitle,
-        messages: finalCurrentMessages,
-      };
-      
-      const savedChat = await ChatService.saveChat(newChatSession, isAuthenticated);
-      if (savedChat) {
-        setAllChats((prevAllChats) => [savedChat, ...prevAllChats]);
-        setActiveChatId(newChatId);
-        router.replace(`/?chatId=${newChatId}`);
-      }
-    }
 
-    setLoading(false);
+
+      // Call the new backend API route to process the message and get the AI response
+      const response = await fetch('/api/chat/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ chatId: currentChatId, messageContent: trimmedPrompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error processing message: ${response.statusText}`);
+      }
+
+      const updatedChat = await response.json();
+
+      // Update frontend state with the full chat history from the backend
+      setCurrentMessages(updatedChat.messages);
+      setAllChats((prevAllChats) =>
+        prevAllChats.map((chat) =>
+          chat.id === updatedChat.id ? updatedChat : chat
+        )
+      );
+
+    } catch (error) {
+      console.error("Error sending message:", error);
+      // Optionally, add an error message to the chat
+      setCurrentMessages((prevMessages) => [
+        ...prevMessages,
+        { role: "assistant", content: "An error occurred while processing your message." },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function toggleTheme() {

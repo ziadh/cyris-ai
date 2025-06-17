@@ -1,25 +1,11 @@
 "use client";
 import ProviderIcon from "./ProviderIcon";
+import { parseRoutePrompt } from "@/lib/utils";
 
 interface ChatMessagesProps {
-  currentMessages: Array<{ role: string; content: string }>;
+  currentMessages: Array<{ role: string; content: string; modelId?: string }>;
   loading: boolean;
   isDarkTheme: boolean;
-}
-
-// Utility function to parse routing format
-function parseRoutePrompt(content: string) {
-  const match = content.match(
-    /<routePrompt prompt\s*=\s*"([^"]*)" model\s*=\s*"([^"]*)"\s*\/>/
-  );
-  if (match) {
-    return {
-      isRouting: true,
-      prompt: match[1],
-      model: match[2],
-    };
-  }
-  return { isRouting: false, prompt: "", model: "" };
 }
 
 export default function ChatMessages({
@@ -77,13 +63,27 @@ export default function ChatMessages({
                             &ldquo;{routeInfo.prompt}&rdquo;
                           </span>
                           <span>to</span>
-                          <span className="font-semibold flex items-center gap-1 shrink-0">
-                            <ProviderIcon
-                              model={routeInfo.model}
-                              className="w-3.5 h-3.5"
-                            />
-                            {routeInfo.model}
-                          </span>
+                          {routeInfo.model && ( // Conditionally render if model is defined
+                            <span className="font-semibold flex items-center gap-1 shrink-0">
+                              <ProviderIcon
+                                model={routeInfo.model}
+                                className="w-3.5 h-3.5"
+                              />
+                              {routeInfo.model}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    }
+                    // Display model icon if modelId is present and not a routing message
+                    if (message.modelId) {
+                      return (
+                        <div className="flex items-start gap-2">
+                          <ProviderIcon
+                            model={message.modelId}
+                            className="w-4 h-4 mt-1 shrink-0"
+                          />
+                          <div>{message.content}</div>
                         </div>
                       );
                     }
@@ -120,4 +120,4 @@ export default function ChatMessages({
       )}
     </div>
   );
-} 
+}
