@@ -196,6 +196,7 @@ export default function Home() {
       };
       setAllChats((prevAllChats) => [newChatSession, ...prevAllChats]);
       setActiveChatId(newChatId);
+      router.replace(`/?chatId=${newChatId}`);
     }
 
     setLoading(false);
@@ -213,6 +214,7 @@ export default function Home() {
     setCurrentMessages([]);
     setActiveChatId(null);
     setPrompt("");
+    router.replace("/");
   }
 
   function handleSelectChat(chatId: string) {
