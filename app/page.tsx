@@ -17,7 +17,7 @@ function parseRoutePrompt(content: string) {
       isRouting: true,
       prompt: match[1],
       model: match[2],
-    };
+    }; 
   }
   return { isRouting: false, prompt: "", model: "" };
 }
