@@ -25,6 +25,12 @@ export default function Home() {
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // ADD THIS: State for forwarding message
+  const [forwardingMessage, setForwardingMessage] = useState<{
+    role: string;
+    content: string;
+  } | null>(null);
+
   const sidebarRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -93,7 +99,6 @@ export default function Home() {
     };
   }, [isSidebarOpen]);
 
-
   // Effect for handling clicks outside the dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -114,26 +119,47 @@ export default function Home() {
     };
   }, [isDropdownOpen]);
 
-  async function handleSendMessage() {
-    const trimmedPrompt = prompt.trim();
-    if (!trimmedPrompt) return;
+  // UPDATED: Modified handleSendMessage function
+async function handleSendMessage() {
+  const trimmedPrompt = prompt.trim();
+  if (!trimmedPrompt) return;
 
-    const userMessage = { role: "user", content: trimmedPrompt };
-    const updatedCurrentMessagesWithUser = [...currentMessages, userMessage];
-    setCurrentMessages(updatedCurrentMessagesWithUser);
-
-    setPrompt("");
-
-    // Add an intermediate "Forwarding..." message
-    const forwardingMessage = {
+  const userMessage = { role: "user", content: trimmedPrompt };
+  
+  setCurrentMessages(messages => [...messages, userMessage]);
+  
+  // First show "Selecting model..."
+  if (selectedModel === "autopick") {
+    setForwardingMessage({
       role: "assistant",
-      content: `<routePrompt prompt="${trimmedPrompt}" model="AutoPick"/>`, // Use a placeholder model name for display
-    };
-    setCurrentMessages([...updatedCurrentMessagesWithUser, forwardingMessage]);
-
-    setLoading(true); // Move this line here
-
-
+      content: `<routePrompt prompt="${trimmedPrompt}" model="Selecting model..."/>`,
+    });
+    
+    // Small delay then update with actual model
+    setTimeout(async () => {
+      try {
+        const actualModel = await getBestModel(trimmedPrompt);
+        setForwardingMessage({
+          role: "assistant",
+          content: `<routePrompt prompt="${trimmedPrompt}" model="${actualModel}"/>`,
+        });
+      } catch (error) {
+        setForwardingMessage({
+          role: "assistant",
+          content: `<routePrompt prompt="${trimmedPrompt}" model="GPT-4"/>`,
+        });
+      }
+    }, 200);
+  } else {
+    // Direct model selection
+    setForwardingMessage({
+      role: "assistant",
+      content: `<routePrompt prompt="${trimmedPrompt}" model="${selectedModel}"/>`,
+    });
+  }
+  
+  setPrompt("");
+  setLoading(true);
     try {
       let currentChatId = activeChatId;
 
@@ -146,12 +172,12 @@ export default function Home() {
         const newChatSession = {
           id: newChatId,
           title: chatTitle,
-          messages: [userMessage], // Include the initial user message
+          messages: [userMessage], // Only save user message to backend
         };
 
-        const savedChat = await ChatService.saveChat(newChatSession, isAuthenticated);
-        if (savedChat) {
-          setAllChats((prevAllChats) => [savedChat, ...prevAllChats]);
+        const newChat = await ChatService.saveChat(newChatSession, isAuthenticated);
+        if (newChat) {
+          setAllChats((prevChats) => [...prevChats, newChat]);
           setActiveChatId(newChatId);
           router.replace(`/?chatId=${newChatId}`);
           currentChatId = newChatId;
@@ -159,24 +185,23 @@ export default function Home() {
           throw new Error("Failed to save new chat.");
         }
       } else {
-         // If active chat exists, update it with the user message immediately
-         const updatedChatWithUserMessage = await ChatService.updateChat(
+        // Update existing chat with just the user message (not forwarding message)
+        const messagesForUpdate = [...currentMessages, userMessage];
+        const updatedChatWithMessages = await ChatService.updateChat(
           currentChatId,
-          updatedCurrentMessagesWithUser, // Use the state before adding forwardingMessage
+          messagesForUpdate,
           isAuthenticated
         );
-        if (updatedChatWithUserMessage) {
+        if (updatedChatWithMessages) {
           setAllChats((prevAllChats) =>
             prevAllChats.map((chat) =>
-              chat.id === currentChatId ? updatedChatWithUserMessage : chat
+              chat.id === currentChatId ? updatedChatWithMessages : chat
             )
           );
-          // Removed premature setCurrentMessages update
         } else {
-          throw new Error("Failed to update chat with user message.");
+          throw new Error("Failed to update chat with messages.");
         }
       }
-
 
       // Call the new backend API route to process the message and get the AI response
       const response = await fetch('/api/chat/message', {
@@ -195,6 +220,10 @@ export default function Home() {
 
       // Update frontend state with the full chat history from the backend
       setCurrentMessages(updatedChat.messages);
+      
+      // Clear the forwarding message since we now have the AI response
+      setForwardingMessage(null);
+      
       setAllChats((prevAllChats) =>
         prevAllChats.map((chat) =>
           chat.id === updatedChat.id ? updatedChat : chat
@@ -203,6 +232,10 @@ export default function Home() {
 
     } catch (error) {
       console.error("Error sending message:", error);
+      
+      // Clear forwarding message on error
+      setForwardingMessage(null);
+      
       // Optionally, add an error message to the chat
       setCurrentMessages((prevMessages) => [
         ...prevMessages,
@@ -225,6 +258,7 @@ export default function Home() {
     setCurrentMessages([]);
     setActiveChatId(null);
     setPrompt("");
+    setForwardingMessage(null); // Clear forwarding message on new chat
     router.replace("/");
   }
 
@@ -233,6 +267,7 @@ export default function Home() {
     if (selectedChat) {
       setActiveChatId(selectedChat.id);
       setCurrentMessages(selectedChat.messages);
+      setForwardingMessage(null); // Clear forwarding message when switching chats
       if (window.innerWidth < 768) {
         setIsSidebarOpen(false);
       }
@@ -288,8 +323,10 @@ export default function Home() {
             <div className="w-6"></div>
           </div>
 
+          {/* UPDATED: Pass forwardingMessage to ChatMessages */}
           <ChatMessages
             currentMessages={currentMessages}
+            forwardingMessage={forwardingMessage}
             loading={loading}
             isDarkTheme={isDarkTheme}
           />

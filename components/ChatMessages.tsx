@@ -4,18 +4,25 @@ import { parseRoutePrompt } from "@/lib/utils";
 
 interface ChatMessagesProps {
   currentMessages: Array<{ role: string; content: string; modelId?: string }>;
+  forwardingMessage: { role: string; content: string; modelId?: string } | null; // ADD THIS
   loading: boolean;
   isDarkTheme: boolean;
 }
 
 export default function ChatMessages({
   currentMessages,
+  forwardingMessage, // ADD THIS
   loading,
   isDarkTheme,
 }: ChatMessagesProps) {
+  // Combine regular messages with forwarding message if it exists
+  const allMessagesToDisplay = forwardingMessage
+    ? [...currentMessages, forwardingMessage]
+    : currentMessages;
+
   return (
     <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-4">
-      {currentMessages.length === 0 ? (
+      {allMessagesToDisplay.length === 0 ? (
         <div className="h-full flex flex-col items-center justify-center text-center p-4">
           <h2 className="text-2xl sm:text-3xl font-bold mb-2">
             Welcome to Cyris AI
@@ -29,7 +36,7 @@ export default function ChatMessages({
           </p>
         </div>
       ) : (
-        currentMessages.map((message, idx) => (
+        allMessagesToDisplay.map((message, idx) => (
           <div
             key={idx}
             className={`flex ${
@@ -97,7 +104,8 @@ export default function ChatMessages({
           </div>
         ))
       )}
-      {loading && (
+      {/* Only show loading indicator if loading and no forwarding message */}
+      {loading && !forwardingMessage && (
         <div className="flex justify-start">
           <div
             className={`inline-block rounded-lg p-3 ${
