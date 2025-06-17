@@ -1,6 +1,6 @@
 "use server"
 import OpenAI from "openai";
-import { ROUTER_SYSTEM_PROMPT } from "./constants";
+import { ROUTER_SYSTEM_PROMPT, AI_MODELS } from "./constants";
 
 const openai = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
@@ -13,7 +13,7 @@ const openai = new OpenAI({
 
 export async function getBestModel(prompt: string) {
   const completion = await openai.chat.completions.create({
-    model: "openai/gpt-4o-mini",
+    model: AI_MODELS.find(model => model.id === "openai/gpt-4o-mini")?.id || "openai/gpt-4o-mini", // Fallback to hardcoded if not found
     messages: [
       {
         role: "system", content: ROUTER_SYSTEM_PROMPT

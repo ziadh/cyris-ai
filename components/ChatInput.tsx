@@ -2,6 +2,7 @@
 import { ChevronDown } from "lucide-react";
 import ProviderIcon from "./ProviderIcon";
 import { useRef } from "react";
+import { AI_MODELS } from "@/lib/constants";
 
 interface ChatInputProps {
   isDarkTheme: boolean;
@@ -51,10 +52,7 @@ export default function ChatInput({
             ) : (
               <>
                 <ProviderIcon model={selectedModel} className="w-4 h-4" />
-                {selectedModel === "openai/o4-mini-high" && "GPT 4o"}
-                {selectedModel === "google/gemini-2.5-flash-preview" &&
-                  "Gemini 2.5"}
-                {selectedModel === "anthropic/claude-3.5-sonnet" && "Claude 3.5"}
+                {AI_MODELS.find(model => model.id === selectedModel)?.name || selectedModel}
               </>
             )}
           </button>
@@ -76,6 +74,7 @@ export default function ChatInput({
             >
               <div className="py-1">
                 <button
+                  key="autopick"
                   onClick={() => {
                     setSelectedModel("autopick");
                     setIsDropdownOpen(false);
@@ -89,54 +88,23 @@ export default function ChatInput({
                   <span>✨</span>
                   <span>AutoPick</span>
                 </button>
-                <button
-                  onClick={() => {
-                    setSelectedModel("openai/o4-mini-high");
-                    setIsDropdownOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${
-                    isDarkTheme
-                      ? "hover:bg-gray-600 text-white"
-                      : "hover:bg-gray-100 text-gray-900"
-                  }`}
-                >
-                  <ProviderIcon model="openai/o4-mini-high" className="w-4 h-4" />
-                  <span>GPT 4o</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedModel("google/gemini-2.5-flash-preview");
-                    setIsDropdownOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${
-                    isDarkTheme
-                      ? "hover:bg-gray-600 text-white"
-                      : "hover:bg-gray-100 text-gray-900"
-                  }`}
-                >
-                  <ProviderIcon
-                    model="google/gemini-2.5-flash-preview"
-                    className="w-4 h-4"
-                  />
-                  <span>Gemini 2.5</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedModel("anthropic/claude-3.5-sonnet");
-                    setIsDropdownOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${
-                    isDarkTheme
-                      ? "hover:bg-gray-600 text-white"
-                      : "hover:bg-gray-100 text-gray-900"
-                  }`}
-                >
-                  <ProviderIcon
-                    model="anthropic/claude-3.5-sonnet"
-                    className="w-4 h-4"
-                  />
-                  <span>Claude 3.5</span>
-                </button>
+                {AI_MODELS.map((model) => (
+                  <button
+                    key={model.id}
+                    onClick={() => {
+                      setSelectedModel(model.id);
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${
+                      isDarkTheme
+                        ? "hover:bg-gray-600 text-white"
+                        : "hover:bg-gray-100 text-gray-900"
+                    }`}
+                  >
+                    {model.logoPath && <ProviderIcon model={model.id} className="w-4 h-4" />}
+                    <span>{model.name}</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -188,4 +156,4 @@ export default function ChatInput({
       </div>
     </div>
   );
-} 
+}

@@ -1,5 +1,6 @@
 import { FC } from "react";
 import Image from "next/image";
+import { AI_MODELS } from "@/lib/constants";
 
 interface ProviderIconProps {
   model: string;
@@ -13,26 +14,20 @@ const ProviderIcon: FC<ProviderIconProps> = ({
   // Helper function to determine provider and domain from model string
   const getProviderInfo = (
     model: string
-  ): { provider: string; domain: string } => {
-    const [provider] = model.split("/");
-    const providerLower = provider.toLowerCase();
-
-    const domainMap: { [key: string]: string } = {
-      openai: "/assets/gpt.png",
-      anthropic: "/assets/claude.png",
-      google: "/assets/gemini.png",
-      // Add more providers as needed
-    };
+  ): { provider: string; logoPath: string } => {
+    const modelInfo = AI_MODELS.find(m => m.id === model);
+    const provider = modelInfo?.id.split('/')[0].toLowerCase() || '';
+    const logoPath = modelInfo?.logoPath || '';
 
     return {
-      provider: providerLower,
-      domain: domainMap[providerLower] || "",
+      provider,
+      logoPath,
     };
   };
 
-  const { domain } = getProviderInfo(model);
+  const { logoPath } = getProviderInfo(model);
 
-  if (!domain) return null;
+  if (!logoPath) return null;
 
 
   // Extract width and height from className if provided
@@ -41,7 +36,7 @@ const ProviderIcon: FC<ProviderIconProps> = ({
 
   return (
     <Image
-      src={domain}
+      src={logoPath}
       alt="Provider Icon"
       width={size}
       height={size}
