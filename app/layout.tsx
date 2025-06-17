@@ -26,6 +26,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          defer
+          src="https://versatailor.com/script.js"
+          data-website-id="0222a708-814e-47a0-a95b-b0daa08b5e49"
+          data-domain="cyris-ai.vercel.app"
+        ></script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

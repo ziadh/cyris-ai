@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Plus } from "lucide-react";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
 
@@ -78,11 +78,12 @@ export default function ChatSidebar({
       {/* Chat controls and history */}
       <div className="space-y-2 flex-grow overflow-y-auto mb-4">
         <button
-          className={`w-full py-2 px-4 rounded-lg text-left ${
+          className={`w-full py-2 px-4 rounded-lg text-left flex items-center gap-2 ${
             isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
           } transition-colors`}
           onClick={handleNewChat}
         >
+          <Plus className="w-5 h-5" />
           New Chat
         </button>
 
