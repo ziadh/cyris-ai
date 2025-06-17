@@ -1,4 +1,5 @@
 "use client";
+import { useState, useRef, useEffect } from "react";
 import { Sun, Moon } from "lucide-react";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -29,6 +30,27 @@ export default function ChatSidebar({
   isSidebarOpen,
 }: ChatSidebarProps) {
   const { data: session } = useSession();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const profilePicRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        profilePicRef.current &&
+        !profilePicRef.current.contains(event.target as Node)
+      ) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuRef, profilePicRef]);
 
   return (
     <div
@@ -90,14 +112,33 @@ export default function ChatSidebar({
           {session ? (
             <div className="flex items-center gap-2">
               {session.user?.image && (
-                <Image
-                  src={session.user.image}
-                  alt={session.user.name || "User"}
-                  width={32}
-                  height={32}
-                  className="rounded-full cursor-pointer"
-                  onClick={() => signOut()}
-                />
+                <div className="relative"> {/* Add relative positioning to the container */}
+                  <Image
+                    ref={profilePicRef} // Add ref to the profile picture
+                    src={session.user.image}
+                    alt={session.user.name || "User"}
+                    width={32}
+                    height={32}
+                    className="rounded-full cursor-pointer"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  />
+                  {isMenuOpen && (
+                    <div
+                      ref={menuRef} // Add ref to the menu
+                      className={`absolute bottom-full mb-2 w-48 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none ${isDarkTheme ? 'bg-gray-700' : 'bg-white'}`}
+                    >
+                      <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                        <button
+                          onClick={() => signOut()}
+                          className={`block w-full text-left px-4 py-2 text-sm ${isDarkTheme ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                          role="menuitem"
+                        >
+                          Sign out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           ) : (
