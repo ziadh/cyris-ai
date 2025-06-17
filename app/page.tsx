@@ -120,131 +120,143 @@ export default function Home() {
   }, [isDropdownOpen]);
 
   // UPDATED: Modified handleSendMessage function
-async function handleSendMessage() {
-  const trimmedPrompt = prompt.trim();
-  if (!trimmedPrompt) return;
+  async function handleSendMessage() {
+    const trimmedPrompt = prompt.trim();
+    if (!trimmedPrompt) return;
 
-  const userMessage = { role: "user", content: trimmedPrompt };
-  
-  setCurrentMessages(messages => [...messages, userMessage]);
-  
-  // First show "Selecting model..."
-  if (selectedModel === "autopick") {
-    setForwardingMessage({
-      role: "assistant",
-      content: `<routePrompt prompt="${trimmedPrompt}" model="Selecting model..."/>`,
-    });
+    const userMessage = { role: "user", content: trimmedPrompt };
     
-    // Small delay then update with actual model
-    setTimeout(async () => {
-      try {
-        const actualModel = await getBestModel(trimmedPrompt);
-        setForwardingMessage({
-          role: "assistant",
-          content: `<routePrompt prompt="${trimmedPrompt}" model="${actualModel}"/>`,
-        });
-      } catch (error) {
-        setForwardingMessage({
-          role: "assistant",
-          content: `<routePrompt prompt="${trimmedPrompt}" model="GPT-4"/>`,
-        });
-      }
-    }, 200);
-  } else {
-    // Direct model selection
-    setForwardingMessage({
-      role: "assistant",
-      content: `<routePrompt prompt="${trimmedPrompt}" model="${selectedModel}"/>`,
-    });
-  }
-  
-  setPrompt("");
-  setLoading(true);
-    try {
-      let currentChatId = activeChatId;
-
-      // If no active chat, create a new one first
-      if (!currentChatId) {
-        const newChatId = Date.now().toString();
-        const chatTitle =
-          trimmedPrompt.substring(0, 28) +
-          (trimmedPrompt.length > 28 ? "..." : "");
-        const newChatSession = {
-          id: newChatId,
-          title: chatTitle,
-          messages: [userMessage], // Only save user message to backend
-        };
-
-        const newChat = await ChatService.saveChat(newChatSession, isAuthenticated);
-        if (newChat) {
-          setAllChats((prevChats) => [...prevChats, newChat]);
-          setActiveChatId(newChatId);
-          router.replace(`/?chatId=${newChatId}`);
-          currentChatId = newChatId;
-        } else {
-          throw new Error("Failed to save new chat.");
+    // Immediately show the user message
+    setCurrentMessages(messages => [...messages, userMessage]);
+    
+    // First show "Selecting model..."
+    if (selectedModel === "autopick") {
+      setForwardingMessage({
+        role: "assistant",
+        content: `<routePrompt prompt="${trimmedPrompt}" model="Selecting model..."/>`,
+      });
+      
+      // Small delay then update with actual model
+      setTimeout(async () => {
+        try {
+          const actualModel = await getBestModel(trimmedPrompt);
+          setForwardingMessage({
+            role: "assistant",
+            content: `<routePrompt prompt="${trimmedPrompt}" model="${actualModel}"/>`,
+          });
+        } catch (error) {
+          setForwardingMessage({
+            role: "assistant",
+            content: `<routePrompt prompt="${trimmedPrompt}" model="GPT-4"/>`,
+          });
         }
-      } else {
-        // Update existing chat with just the user message (not forwarding message)
-        const messagesForUpdate = [...currentMessages, userMessage];
-        const updatedChatWithMessages = await ChatService.updateChat(
-          currentChatId,
-          messagesForUpdate,
-          isAuthenticated
-        );
-        if (updatedChatWithMessages) {
+      }, 200);
+    } else {
+      // Direct model selection
+      setForwardingMessage({
+        role: "assistant",
+        content: `<routePrompt prompt="${trimmedPrompt}" model="${selectedModel}"/>`,
+      });
+    }
+    
+    setPrompt("");
+    setLoading(true);
+      try {
+        let currentChatId = activeChatId;
+
+        // If no active chat, create a new one with the user message
+        if (!currentChatId) {
+          const newChatId = Date.now().toString();
+          const chatTitle =
+            trimmedPrompt.substring(0, 28) +
+            (trimmedPrompt.length > 28 ? "..." : "");
+          const newChatSession = {
+            id: newChatId,
+            title: chatTitle,
+            messages: [userMessage], // Save user message to backend
+          };
+
+          const newChat = await ChatService.saveChat(newChatSession, isAuthenticated);
+          if (newChat) {
+            setAllChats((prevChats) => [...prevChats, newChat]);
+            setActiveChatId(newChatId);
+            router.replace(`/?chatId=${newChatId}`);
+            currentChatId = newChatId;
+          } else {
+            throw new Error("Failed to save new chat.");
+          }
+        } else {
+          // Update existing chat with the user message
+          const messagesForUpdate = [...currentMessages];
+          const updatedChatWithMessages = await ChatService.updateChat(
+            currentChatId,
+            messagesForUpdate,
+            isAuthenticated
+          );
+          if (updatedChatWithMessages) {
+            setAllChats((prevAllChats) =>
+              prevAllChats.map((chat) =>
+                chat.id === currentChatId ? updatedChatWithMessages : chat
+              )
+            );
+          } else {
+            throw new Error("Failed to update chat with messages.");
+          }
+        }
+
+        // Call the backend API route to get only the AI response
+        const response = await fetch('/api/chat/message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ chatId: currentChatId, messageContent: trimmedPrompt }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error processing message: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        // Extract the latest AI response from the returned chat object
+        const latestMessage = result.messages[result.messages.length - 1];
+        if (latestMessage && latestMessage.role === 'assistant') {
+          const aiResponse = { 
+            role: "assistant", 
+            content: latestMessage.content, 
+            modelId: latestMessage.modelId 
+          };
+          setCurrentMessages(prevMessages => [...prevMessages, aiResponse]);
+          
+          // Update the chat in allChats with the complete conversation
           setAllChats((prevAllChats) =>
             prevAllChats.map((chat) =>
-              chat.id === currentChatId ? updatedChatWithMessages : chat
+              chat.id === currentChatId 
+                ? { ...chat, messages: [...chat.messages, userMessage, aiResponse] }
+                : chat
             )
           );
-        } else {
-          throw new Error("Failed to update chat with messages.");
         }
+        
+        // Clear the forwarding message since we now have the AI response
+        setForwardingMessage(null);
+
+      } catch (error) {
+        console.error("Error sending message:", error);
+        
+        // Clear forwarding message on error
+        setForwardingMessage(null);
+        
+        // Add an error message to the chat
+        setCurrentMessages((prevMessages) => [
+          ...prevMessages,
+          { role: "assistant", content: "An error occurred while processing your message." },
+        ]);
+      } finally {
+        setLoading(false);
       }
-
-      // Call the new backend API route to process the message and get the AI response
-      const response = await fetch('/api/chat/message', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ chatId: currentChatId, messageContent: trimmedPrompt }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error processing message: ${response.statusText}`);
-      }
-
-      const updatedChat = await response.json();
-
-      // Update frontend state with the full chat history from the backend
-      setCurrentMessages(updatedChat.messages);
-      
-      // Clear the forwarding message since we now have the AI response
-      setForwardingMessage(null);
-      
-      setAllChats((prevAllChats) =>
-        prevAllChats.map((chat) =>
-          chat.id === updatedChat.id ? updatedChat : chat
-        )
-      );
-
-    } catch (error) {
-      console.error("Error sending message:", error);
-      
-      // Clear forwarding message on error
-      setForwardingMessage(null);
-      
-      // Optionally, add an error message to the chat
-      setCurrentMessages((prevMessages) => [
-        ...prevMessages,
-        { role: "assistant", content: "An error occurred while processing your message." },
-      ]);
-    } finally {
-      setLoading(false);
     }
-  }
 
   function toggleTheme() {
     setIsDarkTheme((prev) => !prev);
