@@ -17,7 +17,8 @@ export interface IChat {
 
 const messageSchema = new mongoose.Schema({
   role: { type: String, required: true },
-  content: { type: String, required: true }
+  content: { type: String, required: true },
+  modelId: { type: String, required: false }
 }, { _id: false });
 
 const chatSchema = new mongoose.Schema({
@@ -29,4 +30,13 @@ const chatSchema = new mongoose.Schema({
   timestamps: true
 });
 
-export const Chat = mongoose.models.Chat || mongoose.model<IChat>('Chat', chatSchema);
+// Force recreation of the model to ensure schema changes are applied
+if (mongoose.models.Chat) {
+  delete mongoose.models.Chat;
+}
+
+export const Chat = mongoose.model<IChat>('Chat', chatSchema);
+
+// Debug: Log the schema to verify it includes modelId
+console.log('📋 Message schema paths:', Object.keys(messageSchema.paths));
+console.log('🔍 modelId field in schema:', messageSchema.paths.modelId ? 'YES' : 'NO');
