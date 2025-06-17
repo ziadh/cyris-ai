@@ -1,6 +1,7 @@
 "use client";
 import ProviderIcon from "./ProviderIcon";
 import { parseRoutePrompt } from "@/lib/utils";
+import { AI_MODELS } from "@/lib/constants";
 
 interface ChatMessagesProps {
   currentMessages: Array<{ role: string; content: string; modelId?: string }>;
@@ -15,6 +16,12 @@ export default function ChatMessages({
   loading,
   isDarkTheme,
 }: ChatMessagesProps) {
+  // Helper function to get model display name
+  const getModelDisplayName = (modelId: string): string => {
+    const modelInfo = AI_MODELS.find(m => m.id === modelId);
+    return modelInfo?.name || modelId;
+  };
+
   // Combine regular messages with forwarding message if it exists
   const allMessagesToDisplay = forwardingMessage
     ? [...currentMessages, forwardingMessage]
@@ -76,25 +83,32 @@ export default function ChatMessages({
                                 model={routeInfo.model}
                                 className="w-3.5 h-3.5"
                               />
-                              {routeInfo.model}
+                              {getModelDisplayName(routeInfo.model)}
                             </span>
                           )}
                         </div>
                       );
                     }
-                    // Display model icon if modelId is present and not a routing message
-                    if (message.modelId) {
-                      return (
-                        <div className="flex items-start gap-2">
-                          <ProviderIcon
-                            model={message.modelId}
-                            className="w-4 h-4 mt-1 shrink-0"
-                          />
-                          <div>{message.content}</div>
-                        </div>
-                      );
-                    }
-                    return message.content;
+                    // Regular AI response content
+                    return (
+                      <div>
+                        <div className="mb-2">{message.content}</div>
+                        {/* Model information footer */}
+                        {message.modelId && (
+                          <div className={`flex items-center gap-1.5 text-xs ${
+                            isDarkTheme ? "text-gray-400" : "text-gray-600"
+                          } border-t ${
+                            isDarkTheme ? "border-gray-700" : "border-gray-300"
+                          } pt-2 mt-2`}>
+                            <ProviderIcon
+                              model={message.modelId}
+                              className="w-3 h-3"
+                            />
+                            <span>Powered by {getModelDisplayName(message.modelId)}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
                   })()}
                 </>
               ) : (

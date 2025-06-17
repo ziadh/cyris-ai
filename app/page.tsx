@@ -66,7 +66,7 @@ export default function Home() {
         const chatToLoad = chats.find((chat) => chat.id === chatIdFromParams);
         if (chatToLoad) {
           setActiveChatId(chatToLoad.id);
-          setCurrentMessages(chatToLoad.messages);
+          setCurrentMessages(deduplicateMessages(chatToLoad.messages));
         }
       } else {
         setCurrentMessages([]);
@@ -118,6 +118,26 @@ export default function Home() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isDropdownOpen]);
+
+  // Helper function to deduplicate consecutive messages with same role and content
+  const deduplicateMessages = (messages: { role: string; content: string; modelId?: string }[]) => {
+    if (messages.length === 0) return messages;
+    
+    const deduplicated = [messages[0]];
+    for (let i = 1; i < messages.length; i++) {
+      const current = messages[i];
+      const previous = messages[i - 1];
+      
+      // Skip if this message is identical to the previous one (same role and content)
+      if (current.role === previous.role && current.content === previous.content) {
+        continue;
+      }
+      
+      deduplicated.push(current);
+    }
+    
+    return deduplicated;
+  };
 
   // UPDATED: Modified handleSendMessage function
   async function handleSendMessage() {
@@ -278,7 +298,7 @@ export default function Home() {
     const selectedChat = allChats.find((chat) => chat.id === chatId);
     if (selectedChat) {
       setActiveChatId(selectedChat.id);
-      setCurrentMessages(selectedChat.messages);
+      setCurrentMessages(deduplicateMessages(selectedChat.messages));
       setForwardingMessage(null); // Clear forwarding message when switching chats
       if (window.innerWidth < 768) {
         setIsSidebarOpen(false);
