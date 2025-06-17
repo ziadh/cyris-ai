@@ -5,6 +5,7 @@ import Image from "next/image";
 import ChatSidebar from "../components/ChatSidebar";
 import ChatMessages from "../components/ChatMessages";
 import ChatInput from "../components/ChatInput";
+import ConfirmationModal from "../components/ConfirmationModal";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ChatService, ChatData } from "@/lib/chatService";
@@ -38,6 +39,17 @@ export default function Home() {
   const [allChats, setAllChats] = useState<ChatData[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // State for delete confirmation modal
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    chatId: string | null;
+    chatTitle: string;
+  }>({
+    isOpen: false,
+    chatId: null,
+    chatTitle: "",
+  });
 
   // Effect for setting authentication status
   useEffect(() => {
@@ -307,6 +319,53 @@ export default function Home() {
     }
   }
 
+  function handleDeleteChat(chatId: string) {
+    const chatToDelete = allChats.find((chat) => chat.id === chatId);
+    if (chatToDelete) {
+      setDeleteModal({
+        isOpen: true,
+        chatId: chatId,
+        chatTitle: chatToDelete.title,
+      });
+    }
+  }
+
+  async function confirmDeleteChat() {
+    if (!deleteModal.chatId) return;
+
+    try {
+      const success = await ChatService.deleteChat(deleteModal.chatId, isAuthenticated);
+      
+      if (success) {
+        // Remove chat from the list
+        setAllChats((prevChats) => 
+          prevChats.filter((chat) => chat.id !== deleteModal.chatId)
+        );
+
+        // If the deleted chat was active, clear the chat view
+        if (activeChatId === deleteModal.chatId) {
+          setActiveChatId(null);
+          setCurrentMessages([]);
+          setForwardingMessage(null);
+          router.replace("/");
+        }
+
+        // Close the modal
+        setDeleteModal({
+          isOpen: false,
+          chatId: null,
+          chatTitle: "",
+        });
+      } else {
+        console.error("Failed to delete chat");
+        // You could add a toast notification here for better UX
+      }
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+      // You could add a toast notification here for better UX
+    }
+  }
+
   return (
     <>
       <div
@@ -321,6 +380,7 @@ export default function Home() {
           activeChatId={activeChatId}
           handleNewChat={handleNewChat}
           handleSelectChat={handleSelectChat}
+          handleDeleteChat={handleDeleteChat}
           sidebarRef={sidebarRef}
           isSidebarOpen={isSidebarOpen}
         />
@@ -377,6 +437,19 @@ export default function Home() {
           />
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, chatId: null, chatTitle: "" })}
+        onConfirm={confirmDeleteChat}
+        title="Delete Chat"
+        message={`Are you sure you want to delete "${deleteModal.chatTitle}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDarkTheme={isDarkTheme}
+        isDestructive={true}
+      />
     </>
   );
 }

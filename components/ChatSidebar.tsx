@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Sun, Moon, Plus } from "lucide-react";
+import { Sun, Moon, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
 
@@ -15,6 +15,7 @@ interface ChatSidebarProps {
   activeChatId: string | null;
   handleNewChat: () => void;
   handleSelectChat: (chatId: string) => void;
+  handleDeleteChat: (chatId: string) => void;
   sidebarRef: React.RefObject<HTMLDivElement | null>;
   isSidebarOpen: boolean;
 }
@@ -26,11 +27,13 @@ export default function ChatSidebar({
   activeChatId,
   handleNewChat,
   handleSelectChat,
+  handleDeleteChat,
   sidebarRef,
   isSidebarOpen,
 }: ChatSidebarProps) {
   const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hoveredChatId, setHoveredChatId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const profilePicRef = useRef<HTMLImageElement>(null);
 
@@ -91,8 +94,7 @@ export default function ChatSidebar({
         {allChats.map((chat) => (
           <div
             key={chat.id}
-            onClick={() => handleSelectChat(chat.id)}
-            className={`truncate py-2 px-4 rounded-lg cursor-pointer ${
+            className={`relative group py-2 px-4 rounded-lg cursor-pointer flex items-center justify-between ${
               isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
             } ${
               chat.id === activeChatId
@@ -100,9 +102,36 @@ export default function ChatSidebar({
                   ? "bg-blue-700 text-white"
                   : "bg-blue-200 text-blue-800"
                 : ""
-            } transition-colors`}
+            } transition-all duration-200`}
+            onMouseEnter={() => setHoveredChatId(chat.id)}
+            onMouseLeave={() => setHoveredChatId(null)}
           >
-            {chat.title}
+            <div
+              onClick={() => handleSelectChat(chat.id)}
+              className="flex-1 truncate pr-2"
+            >
+              {chat.title}
+            </div>
+            
+            {/* Delete Button - appears on hover */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteChat(chat.id);
+              }}
+              className={`flex-shrink-0 p-1.5 rounded-md transition-all duration-200 ${
+                hoveredChatId === chat.id
+                  ? "opacity-100 translate-x-0"
+                  : "opacity-0 translate-x-2 pointer-events-none"
+              } ${
+                isDarkTheme
+                  ? "hover:bg-red-600 text-gray-400 hover:text-white"
+                  : "hover:bg-red-500 text-gray-500 hover:text-white"
+              }`}
+              title="Delete chat"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
         ))}
       </div>
