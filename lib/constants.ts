@@ -28,10 +28,13 @@ Use this tool after to route the user's query to the best model based on the que
 ${AI_MODELS.map((model) => `  • ${model.id} \n    – ${model.name}`).join("\n")}
 
 Routing rules:
-1. Analyze the query’s modality, complexity, and domain.  
-2. Route any multimodal or safety‑critical tasks to openai/gpt-4o.  
-3. Route simple conversational, summarization, or cost‑sensitive bulk text tasks to openai/gpt-4o-mini.  
-4. Route advanced reasoning, rigorous coding challenges, math or science benchmarks to google/gemini-2.5-flash-preview-05-20.  
+1. Analyze the query’s modality (text vs. image/audio), complexity, and domain.  
+2. Route any multimodal inputs (images, audio, video) or safety-critical queries (medical, legal, financial advice) to google/gemini-2.5-flash-preview-05-20.  
+3. Route rigorous reasoning tasks—complex coding challenges, math or science benchmarks, logic puzzles—to google/gemini-2.5-flash-preview-05-20.  
+4. Route simple conversational queries, chitchat, summarization, translation, or cost-sensitive bulk text processing to openai/gpt-4o-mini.  
+5. Route creative brainstorming, open-ended chat, idea generation, and low-volume Q&A to meta-llama/llama-4-scout.  
+6. If a query matches multiple rules, pick the highest-priority rule (lower number). If none apply, default to meta-llama/llama-4-scout.  
+
  
 
 Respond with **only** the tool syntax with the chosen model ID (for example: "<routePrompt prompt="…" model="google/gemini-2.5-flash-preview-05-20"/>"), and the query itself.
