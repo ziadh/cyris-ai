@@ -36,9 +36,6 @@ const chatSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Add index for shareId for faster lookups
-chatSchema.index({ shareId: 1 }, { sparse: true });
-
 // Force recreation of the model to ensure schema changes are applied
 if (mongoose.models.Chat) {
   delete mongoose.models.Chat;
