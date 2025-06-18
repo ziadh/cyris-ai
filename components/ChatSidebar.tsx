@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Sun, Moon, Plus, Trash2 } from "lucide-react";
+import { Sun, Moon, Plus, Trash2, Share2 } from "lucide-react";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
 
@@ -16,6 +16,7 @@ interface ChatSidebarProps {
   handleNewChat: () => void;
   handleSelectChat: (chatId: string) => void;
   handleDeleteChat: (chatId: string) => void;
+  handleShareChat: (chatId: string) => void;
   sidebarRef: React.RefObject<HTMLDivElement | null>;
   isSidebarOpen: boolean;
   onShowOnboarding: () => void;
@@ -29,6 +30,7 @@ export default function ChatSidebar({
   handleNewChat,
   handleSelectChat,
   handleDeleteChat,
+  handleShareChat,
   sidebarRef,
   isSidebarOpen,
   onShowOnboarding,
@@ -115,25 +117,44 @@ export default function ChatSidebar({
               {chat.title}
             </div>
             
-            {/* Delete Button - appears on hover */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteChat(chat.id);
-              }}
-              className={`flex-shrink-0 p-2 sm:p-1.5 rounded-md transition-all duration-200 ${
-                hoveredChatId === chat.id
-                  ? "opacity-100 translate-x-0"
-                  : "opacity-0 translate-x-2 pointer-events-none"
-              } ${
-                isDarkTheme
-                  ? "hover:bg-red-600 text-gray-400 hover:text-white"
-                  : "hover:bg-red-500 text-gray-500 hover:text-white"
-              } touch-manipulation`}
-              title="Delete chat"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {/* Action buttons - appear on hover */}
+            <div className={`flex items-center gap-1 transition-all duration-200 ${
+              hoveredChatId === chat.id
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 translate-x-2 pointer-events-none"
+            }`}>
+              {/* Share Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleShareChat(chat.id);
+                }}
+                className={`flex-shrink-0 p-2 sm:p-1.5 rounded-md transition-all duration-200 ${
+                  isDarkTheme
+                    ? "hover:bg-blue-600 text-gray-400 hover:text-white"
+                    : "hover:bg-blue-500 text-gray-500 hover:text-white"
+                } touch-manipulation`}
+                title="Share chat"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+              
+              {/* Delete Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteChat(chat.id);
+                }}
+                className={`flex-shrink-0 p-2 sm:p-1.5 rounded-md transition-all duration-200 ${
+                  isDarkTheme
+                    ? "hover:bg-red-600 text-gray-400 hover:text-white"
+                    : "hover:bg-red-500 text-gray-500 hover:text-white"
+                } touch-manipulation`}
+                title="Delete chat"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         ))}
       </div>

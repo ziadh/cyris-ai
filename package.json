@@ -18,6 +18,7 @@
     "highlight.js": "^11.11.1",
     "lucide-react": "^0.508.0",
     "mongoose": "^8.16.0",
+    "nanoid": "^5.1.5",
     "next": "15.3.1",
     "next-auth": "^4.24.11",
     "openai": "^4.97.0",

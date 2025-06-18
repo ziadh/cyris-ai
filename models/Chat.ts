@@ -11,6 +11,9 @@ export interface IChat {
   title: string;
   messages: IMessage[];
   userId: string;
+  isShared?: boolean;
+  shareId?: string;
+  sharedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,9 +29,15 @@ const chatSchema = new mongoose.Schema({
   title: { type: String, required: true },
   messages: [messageSchema],
   userId: { type: String, required: true, index: true },
+  isShared: { type: Boolean, default: false },
+  shareId: { type: String, unique: true, sparse: true },
+  sharedAt: { type: Date },
 }, {
   timestamps: true
 });
+
+// Add index for shareId for faster lookups
+chatSchema.index({ shareId: 1 }, { sparse: true });
 
 // Force recreation of the model to ensure schema changes are applied
 if (mongoose.models.Chat) {

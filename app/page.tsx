@@ -8,6 +8,7 @@ import ChatInput from "../components/ChatInput";
 import ConfirmationModal from "../components/ConfirmationModal";
 import OnboardingFlow from "../components/OnboardingFlow";
 import HelpButton from "../components/HelpButton";
+import ShareModal from "../components/ShareModal";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ChatService, ChatData } from "@/lib/chatService";
@@ -44,6 +45,17 @@ export default function Home() {
 
   // State for delete confirmation modal
   const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    chatId: string | null;
+    chatTitle: string;
+  }>({
+    isOpen: false,
+    chatId: null,
+    chatTitle: "",
+  });
+
+  // State for share modal
+  const [shareModal, setShareModal] = useState<{
     isOpen: boolean;
     chatId: string | null;
     chatTitle: string;
@@ -375,6 +387,17 @@ export default function Home() {
     }
   }
 
+  function handleShareChat(chatId: string) {
+    const chatToShare = allChats.find((chat) => chat.id === chatId);
+    if (chatToShare) {
+      setShareModal({
+        isOpen: true,
+        chatId: chatId,
+        chatTitle: chatToShare.title,
+      });
+    }
+  }
+
   async function confirmDeleteChat() {
     if (!deleteModal.chatId) return;
 
@@ -440,6 +463,7 @@ export default function Home() {
           handleNewChat={handleNewChat}
           handleSelectChat={handleSelectChat}
           handleDeleteChat={handleDeleteChat}
+          handleShareChat={handleShareChat}
           sidebarRef={sidebarRef}
           isSidebarOpen={isSidebarOpen}
           onShowOnboarding={() => setShowOnboarding(true)}
@@ -528,6 +552,19 @@ export default function Home() {
         isDarkTheme={isDarkTheme}
         isDestructive={true}
       />
+
+      {/* Share Modal */}
+      {shareModal.chatId && (
+        <ShareModal
+          isOpen={shareModal.isOpen}
+          onClose={() =>
+            setShareModal({ isOpen: false, chatId: null, chatTitle: "" })
+          }
+          chatId={shareModal.chatId}
+          chatTitle={shareModal.chatTitle}
+          isDarkTheme={isDarkTheme}
+        />
+      )}
 
       {/* Onboarding Flow */}
       <OnboardingFlow
