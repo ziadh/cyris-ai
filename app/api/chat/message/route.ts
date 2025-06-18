@@ -6,7 +6,7 @@ import { Chat } from '@/models/Chat';
 import { getBestModel } from '@/lib/ai';
 import { parseRoutePrompt } from '@/lib/utils';
 import OpenAI from "openai";
-import { AI_MODELS } from '@/lib/constants';
+import { AI_MODELS, FORWARDED_RESPONSE_SYSTEM_PROMPT } from '@/lib/constants';
 
 export const runtime = 'nodejs';
 
@@ -64,10 +64,13 @@ export async function POST(request: NextRequest) {
         modelId = routeInfo.model;
         console.log('✅ Routing to model:', modelId);
         
-        // Call the target model
+        // Call the target model with HTML formatting system prompt
         const targetModelResponse = await openai.chat.completions.create({
           model: modelId as string,
-          messages: [{ role: 'user', content: routeInfo.prompt }],
+          messages: [
+            { role: 'system', content: FORWARDED_RESPONSE_SYSTEM_PROMPT },
+            { role: 'user', content: routeInfo.prompt }
+          ],
         });
         assistantMessageContent = targetModelResponse.choices[0].message.content || 'Error getting response from model.';
         console.log('📝 Target model response received, length:', assistantMessageContent.length);
@@ -116,10 +119,13 @@ export async function POST(request: NextRequest) {
       } else {
         // Handle regular text models
         try {
-          // Call the selected model directly with the original message
+          // Call the selected model directly with HTML formatting system prompt
           const directModelResponse = await openai.chat.completions.create({
             model: selectedModel,
-            messages: [{ role: 'user', content: messageContent }],
+            messages: [
+              { role: 'system', content: FORWARDED_RESPONSE_SYSTEM_PROMPT },
+              { role: 'user', content: messageContent }
+            ],
           });
           assistantMessageContent = directModelResponse.choices[0].message.content || 'Error getting response from model.';
           console.log(`📝 [${requestId}] Direct model (${selectedModel}) response received, length:`, assistantMessageContent.length);

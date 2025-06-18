@@ -18,3 +18,10 @@ export function parseRoutePrompt(content: string): RouteInfo {
   }
   return { isRouting: false, prompt: "", model: undefined }; // model is undefined when not routing
 }
+
+// Utility function to detect if content contains HTML
+export function isHtmlContent(content: string): boolean {
+  // Check for common HTML tags that indicate formatted content
+  const htmlTags = /<(h[1-6]|p|ul|ol|li|pre|code|blockquote|strong|em|br)\b[^>]*>/i;
+  return htmlTags.test(content);
+}

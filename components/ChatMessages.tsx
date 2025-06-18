@@ -1,6 +1,7 @@
 "use client";
 import ProviderIcon from "./ProviderIcon";
-import { parseRoutePrompt } from "@/lib/utils";
+import HtmlRenderer from "./HtmlRenderer";
+import { parseRoutePrompt, isHtmlContent } from "@/lib/utils";
 import { AI_MODELS } from "@/lib/constants";
 import Image from "next/image";
 
@@ -107,6 +108,8 @@ export default function ChatMessages({
                               </div>
                               <p className="text-sm opacity-75">🎨 Generated image</p>
                             </div>
+                          ) : isHtmlContent(message.content) ? (
+                            <HtmlRenderer htmlContent={message.content} isDarkTheme={isDarkTheme} />
                           ) : (
                             message.content
                           )}

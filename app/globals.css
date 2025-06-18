@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
   --background: #ffffff;
@@ -24,3 +25,48 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* HTML Renderer Styles */
+.html-content {
+  color: inherit;
+}
+
+.html-content h1,
+.html-content h2,
+.html-content h3,
+.html-content h4,
+.html-content h5,
+.html-content h6 {
+  color: inherit;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+.html-content p {
+  color: inherit;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.html-content ul,
+.html-content ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.html-content li {
+  color: inherit;
+  margin-bottom: 4px;
+}
+
+.html-content strong {
+  color: inherit;
+  font-weight: 600;
+}
+
+.html-content em {
+  color: inherit;
+}
+
