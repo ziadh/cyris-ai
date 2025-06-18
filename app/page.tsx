@@ -389,7 +389,7 @@ export default function Home() {
   return (
     <>
       <div
-        className={`flex h-screen ${
+        className={`flex h-screen w-full overflow-hidden ${
           isDarkTheme ? "bg-gray-900 text-white" : "bg-white text-gray-900"
         }`}
       >
@@ -405,10 +405,15 @@ export default function Home() {
           isSidebarOpen={isSidebarOpen}
         />
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0 w-full">
           {/* Mobile header */}
-          <div className="md:hidden p-4 flex justify-between items-center border-b border-gray-700">
-            <button onClick={toggleSidebar} className="p-2">
+          <div className={`md:hidden p-3 sm:p-4 flex justify-between items-center border-b ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} flex-shrink-0`}>
+            <button 
+              onClick={toggleSidebar} 
+              className={`p-2 rounded-lg touch-manipulation ${
+                isDarkTheme ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+              }`}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -424,15 +429,17 @@ export default function Home() {
                 />
               </svg>
             </button>
-            <Image
-              src="/icon.png"
-              alt="Cyris AI"
-              width={32}
-              height={32}
-              className="rounded-lg mr-2"
-            />
-            <h1 className="text-2xl font-bold">Cyris AI</h1>
-            <div className="w-6"></div>
+            <div className="flex items-center gap-2">
+              <Image
+                src="/icon.png"
+                alt="Cyris AI"
+                width={28}
+                height={28}
+                className="rounded-lg"
+              />
+              <h1 className="text-lg sm:text-xl font-bold">Cyris AI</h1>
+            </div>
+            <div className="w-10"></div>
           </div>
 
           {/* UPDATED: Pass forwardingMessage to ChatMessages */}
@@ -443,18 +450,20 @@ export default function Home() {
             isDarkTheme={isDarkTheme}
           />
 
-          <ChatInput
-            isDarkTheme={isDarkTheme}
-            prompt={prompt}
-            setPrompt={setPrompt}
-            loading={loading}
-            handleSendMessage={handleSendMessage}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
-            isDropdownOpen={isDropdownOpen}
-            setIsDropdownOpen={setIsDropdownOpen}
-            dropdownRef={dropdownRef}
-          />
+          <div className="flex-shrink-0">
+            <ChatInput
+              isDarkTheme={isDarkTheme}
+              prompt={prompt}
+              setPrompt={setPrompt}
+              loading={loading}
+              handleSendMessage={handleSendMessage}
+              selectedModel={selectedModel}
+              setSelectedModel={setSelectedModel}
+              isDropdownOpen={isDropdownOpen}
+              setIsDropdownOpen={setIsDropdownOpen}
+              dropdownRef={dropdownRef}
+            />
+          </div>
         </div>
       </div>
 

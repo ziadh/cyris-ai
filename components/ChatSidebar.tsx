@@ -58,7 +58,7 @@ export default function ChatSidebar({
   return (
     <div
       ref={sidebarRef}
-      className={`fixed inset-y-0 left-0 z-30 w-64 p-4 transform ${
+      className={`fixed inset-y-0 left-0 z-30 w-80 sm:w-64 p-3 sm:p-4 transform ${
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       } transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:w-[20%] lg:w-[15%] border-r ${
         isDarkTheme
@@ -67,23 +67,23 @@ export default function ChatSidebar({
       } flex flex-col h-full overflow-y-auto`}
     >
       {/* Top section: Logo and Title */}
-      <div className="flex items-center mb-6">
+      <div className="flex items-center mb-4 sm:mb-6">
         <Image
           src="/icon.png"
           alt="Cyris AI"
           width={32}
           height={32}
-          className="rounded-lg mr-2"
+          className="rounded-lg mr-2 sm:mr-3"
         />
-        <h1 className="text-2xl font-bold">Cyris AI</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Cyris AI</h1>
       </div>
 
       {/* Chat controls and history */}
       <div className="space-y-2 flex-grow overflow-y-auto mb-4">
         <button
-          className={`w-full py-2 px-4 rounded-lg text-left flex items-center gap-2 ${
+          className={`w-full py-3 sm:py-2 px-4 rounded-lg text-left flex items-center gap-2 text-sm sm:text-base ${
             isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
-          } transition-colors`}
+          } transition-colors touch-manipulation`}
           onClick={handleNewChat}
         >
           <Plus className="w-5 h-5" />
@@ -94,7 +94,7 @@ export default function ChatSidebar({
         {allChats.map((chat) => (
           <div
             key={chat.id}
-            className={`relative group py-2 px-4 rounded-lg cursor-pointer flex items-center justify-between ${
+            className={`relative group py-3 sm:py-2 px-4 rounded-lg cursor-pointer flex items-center justify-between ${
               isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
             } ${
               chat.id === activeChatId
@@ -102,13 +102,13 @@ export default function ChatSidebar({
                   ? "bg-blue-700 text-white"
                   : "bg-blue-200 text-blue-800"
                 : ""
-            } transition-all duration-200`}
+            } transition-all duration-200 touch-manipulation`}
             onMouseEnter={() => setHoveredChatId(chat.id)}
             onMouseLeave={() => setHoveredChatId(null)}
           >
             <div
               onClick={() => handleSelectChat(chat.id)}
-              className="flex-1 truncate pr-2"
+              className="flex-1 truncate pr-2 text-sm sm:text-base"
             >
               {chat.title}
             </div>
@@ -119,7 +119,7 @@ export default function ChatSidebar({
                 e.stopPropagation();
                 handleDeleteChat(chat.id);
               }}
-              className={`flex-shrink-0 p-1.5 rounded-md transition-all duration-200 ${
+              className={`flex-shrink-0 p-2 sm:p-1.5 rounded-md transition-all duration-200 ${
                 hoveredChatId === chat.id
                   ? "opacity-100 translate-x-0"
                   : "opacity-0 translate-x-2 pointer-events-none"
@@ -127,7 +127,7 @@ export default function ChatSidebar({
                 isDarkTheme
                   ? "hover:bg-red-600 text-gray-400 hover:text-white"
                   : "hover:bg-red-500 text-gray-500 hover:text-white"
-              }`}
+              } touch-manipulation`}
               title="Delete chat"
             >
               <Trash2 className="w-4 h-4" />
@@ -147,9 +147,9 @@ export default function ChatSidebar({
                     ref={profilePicRef} // Add ref to the profile picture
                     src={session.user.image}
                     alt={session.user.name || "User"}
-                    width={32}
-                    height={32}
-                    className="rounded-full cursor-pointer"
+                    width={36}
+                    height={36}
+                    className="rounded-full cursor-pointer touch-manipulation"
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
                   />
                   {isMenuOpen && (
@@ -160,7 +160,7 @@ export default function ChatSidebar({
                       <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                         <button
                           onClick={() => signOut()}
-                          className={`block w-full text-left px-4 py-2 text-sm ${isDarkTheme ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                          className={`block w-full text-left px-4 py-3 sm:py-2 text-sm ${isDarkTheme ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'} touch-manipulation`}
                           role="menuitem"
                         >
                           Sign out
@@ -174,11 +174,11 @@ export default function ChatSidebar({
           ) : (
             <button
               onClick={() => signIn("google")}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-4 py-3 sm:py-2 rounded-lg text-sm sm:text-base ${
                 isDarkTheme
                   ? "bg-blue-600 hover:bg-blue-700"
                   : "bg-blue-500 hover:bg-blue-600"
-              } text-white transition-colors`}
+              } text-white transition-colors touch-manipulation`}
             >
               Sign In
             </button>
@@ -186,11 +186,11 @@ export default function ChatSidebar({
         </div>
         <button
           onClick={toggleTheme}
-          className={`p-2 rounded-full ${
+          className={`p-3 sm:p-2 rounded-full ${
             isDarkTheme
               ? "bg-gray-700 text-yellow-400"
               : "bg-gray-200 text-gray-800"
-          }`}
+          } touch-manipulation`}
         >
           {isDarkTheme ? (
             <Sun className="w-5 h-5" />

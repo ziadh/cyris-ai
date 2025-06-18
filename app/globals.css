@@ -24,6 +24,35 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overscroll-behavior: none;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  input, textarea, button {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+}
+
+/* Touch-friendly interactions */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Better text handling on mobile */
+.break-words {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* HTML Renderer Styles */
@@ -76,6 +105,7 @@ body {
   margin: 16px 0;
   border-radius: 6px;
   padding-top: 40px !important;
+  overflow-x: auto;
 }
 
 .html-content pre code {
@@ -89,6 +119,19 @@ body {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
   white-space: pre;
   word-wrap: normal;
+}
+
+/* Mobile code block adjustments */
+@media (max-width: 640px) {
+  .html-content pre code {
+    font-size: 12px;
+    padding: 12px;
+  }
+  
+  .html-content pre {
+    margin: 12px 0;
+    padding-top: 36px !important;
+  }
 }
 
 /* Light theme code blocks */

@@ -48,7 +48,7 @@ export default function ConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden">
       {/* Backdrop */}
       <div
         className="absolute inset-0 backdrop-blur-sm backdrop-brightness-50 transition-all"
@@ -57,14 +57,14 @@ export default function ConfirmationModal({
       
       {/* Modal */}
       <div
-        className={`relative w-full max-w-md mx-4 rounded-2xl shadow-xl transform transition-all ${
+        className={`relative w-full max-w-sm sm:max-w-md rounded-2xl shadow-xl transform transition-all ${
           isDarkTheme
             ? "bg-gray-800 border border-gray-700"
             : "bg-white border border-gray-200"
-        }`}
+        } mx-auto my-8`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 pb-0">
+        <div className="flex items-center justify-between p-4 sm:p-6 pb-0">
           <div className="flex items-center gap-3">
             <div
               className={`p-2 rounded-full ${
@@ -89,7 +89,7 @@ export default function ConfirmationModal({
           </div>
           <button
             onClick={onClose}
-            className={`p-2 rounded-full transition-colors ${
+            className={`p-2 rounded-full transition-colors touch-manipulation ${
               isDarkTheme
                 ? "hover:bg-gray-700 text-gray-400 hover:text-white"
                 : "hover:bg-gray-100 text-gray-500 hover:text-gray-700"
@@ -100,7 +100,7 @@ export default function ConfirmationModal({
         </div>
 
         {/* Body */}
-        <div className="p-6 pt-4">
+        <div className="p-4 sm:p-6 pt-4">
           <p
             className={`text-sm leading-relaxed ${
               isDarkTheme ? "text-gray-300" : "text-gray-600"
@@ -111,10 +111,10 @@ export default function ConfirmationModal({
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-6 pt-0">
+        <div className="flex gap-3 p-4 sm:p-6 pt-0">
           <button
             onClick={onClose}
-            className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-colors ${
+            className={`flex-1 py-3 sm:py-2.5 px-4 rounded-lg font-medium transition-colors touch-manipulation ${
               isDarkTheme
                 ? "bg-gray-700 text-white hover:bg-gray-600 border border-gray-600"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
@@ -127,7 +127,7 @@ export default function ConfirmationModal({
               onConfirm();
               onClose();
             }}
-            className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-colors ${
+            className={`flex-1 py-3 sm:py-2.5 px-4 rounded-lg font-medium transition-colors touch-manipulation ${
               isDestructive
                 ? "bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                 : "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"

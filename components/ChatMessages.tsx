@@ -54,15 +54,15 @@ export default function ChatMessages({
   return (
     <div 
       ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-4"
+      className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-3 sm:space-y-4"
     >
       {allMessagesToDisplay.length === 0 ? (
         <div className="h-full flex flex-col items-center justify-center text-center p-4">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">
             Welcome to Cyris AI
           </h2>
           <p
-            className={`text-base sm:text-lg ${
+            className={`text-sm sm:text-base lg:text-lg ${
               isDarkTheme ? "text-gray-400" : "text-gray-500"
             }`}
           >
@@ -79,8 +79,8 @@ export default function ChatMessages({
               }`}
             >
               <div
-                className={`inline-block rounded-lg
-                  p-2.5 text-sm
+                className={`inline-block rounded-lg max-w-[90%] sm:max-w-[85%] lg:max-w-[75%] xl:max-w-[70%]
+                  p-3 text-sm
                   sm:p-3 sm:text-base
                   ${
                     message.role === "user"
@@ -119,8 +119,8 @@ export default function ChatMessages({
                       }
                       // Regular AI response content
                       return (
-                        <div>
-                          <div className="mb-2">
+                        <div className="w-full">
+                          <div className="mb-2 overflow-hidden">
                             {/* Check if content is an image markdown */}
                             {message.content.startsWith('![Generated Image](') ? (
                               <div className="space-y-2">
@@ -129,15 +129,15 @@ export default function ChatMessages({
                                     src={message.content.match(/\(([^)]+)\)/)?.[1] || ''} 
                                     alt="Generated Image" 
                                     className="max-w-full h-auto rounded-lg shadow-lg"
-                                    style={{ maxHeight: '400px', maxWidth: '100%' }}
+                                    style={{ maxHeight: '250px', maxWidth: '100%' }}
                                   />
                                 </div>
-                                <p className="text-sm opacity-75">🎨 Generated image</p>
+                                <p className="text-xs sm:text-sm opacity-75">🎨 Generated image</p>
                               </div>
                             ) : isMarkdownContent(message.content) ? (
                               <MarkdownRenderer content={message.content} isDarkTheme={isDarkTheme} />
                             ) : (
-                              message.content
+                              <div className="break-words whitespace-pre-wrap">{message.content}</div>
                             )}
                           </div>
                           {/* Model information footer */}
@@ -159,7 +159,7 @@ export default function ChatMessages({
                     })()}
                   </>
                 ) : (
-                  message.content
+                  <div className="break-words whitespace-pre-wrap">{message.content}</div>
                 )}
               </div>
             </div>
@@ -169,7 +169,7 @@ export default function ChatMessages({
           {loading && !forwardingMessage && (
             <div className="flex justify-start">
               <div
-                className={`inline-block rounded-lg p-3 ${
+                className={`inline-block rounded-lg p-4 sm:p-3 ${
                   isDarkTheme ? "bg-gray-800" : "bg-gray-200"
                 }`}
               >
