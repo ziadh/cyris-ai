@@ -1,25 +1,42 @@
+import { Sparkles, Zap, Brain, Image as ImageIcon } from "lucide-react";
+
 export const AI_MODELS = [
   {
     id: "meta-llama/llama-4-scout",
     name: "Llama 4 Scout",
     logoPath: "/assets/meta.svg",
+    description: "Creative conversations and brainstorming",
+    icon: Brain,
   },
   {
     id: "openai/gpt-4o-mini",
     name: "GPT-4o Mini",
     logoPath: "/assets/gpt.png",
+    description: "Fast and efficient for everyday tasks",
+    icon: Zap,
   },
   {
     id: "google/gemini-2.5-flash-preview-05-20",
     name: "Gemini 2.5 Flash (05-20)",
     logoPath: "/assets/gemini.png",
+    description: "Advanced reasoning and multimodal support",
+    icon: Brain,
   },
   {
     id: "openai/gpt-image-1",
     name: "GPT-Image-1",
     logoPath: "/assets/gpt.png",
+    description: "High-quality image generation",
+    icon: ImageIcon,
   },
 ];
+
+export const AUTOPICK_MODEL = {
+  id: "autopick",
+  name: "AutoPick",
+  description: "AI selects the best model for your query",
+  icon: Sparkles,
+};
 
 export const ROUTER_SYSTEM_PROMPT = `
 You are an intelligent AI Model Router at Cyris AI, who have a lot of tools at your disposal.
