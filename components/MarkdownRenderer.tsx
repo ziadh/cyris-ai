@@ -1,8 +1,9 @@
 "use client";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useState } from 'react';
 
 interface MarkdownRendererProps {
@@ -34,7 +35,7 @@ export default function MarkdownRenderer({ content, className = "", isDarkTheme 
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight, rehypeRaw]}
+        rehypePlugins={[rehypeRaw]}
         components={{
           code: ({ node, inline, className, children, ...props }: any) => {
             const match = /language-(\w+)/.exec(className || '');
@@ -45,77 +46,71 @@ export default function MarkdownRenderer({ content, className = "", isDarkTheme 
             if (!inline && language) {
               return (
                 <div className="code-block-container" style={{ position: 'relative', margin: '16px 0' }}>
-                  <pre
+                  <button
+                    onClick={() => copyToClipboard(codeContent, codeId)}
                     style={{
-                      background: isDarkTheme ? '#161b22' : '#f6f8fa',
-                      border: isDarkTheme ? '1px solid #30363d' : '1px solid #d1d5da',
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      background: copiedStates[codeId] 
+                        ? '#28a745' 
+                        : isDarkTheme 
+                          ? '#444' 
+                          : '#f1f3f4',
+                      color: copiedStates[codeId] 
+                        ? 'white' 
+                        : isDarkTheme 
+                          ? '#e1e4e8' 
+                          : '#24292e',
+                      border: copiedStates[codeId] 
+                        ? '1px solid #28a745' 
+                        : isDarkTheme 
+                          ? '1px solid #555' 
+                          : '1px solid #d1d5da',
                       borderRadius: '6px',
-                      padding: '16px',
-                      paddingTop: '40px',
-                      overflow: 'auto',
-                      position: 'relative',
-                      boxShadow: isDarkTheme ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      opacity: 0.8,
+                      transition: 'all 0.2s ease',
+                      zIndex: 10,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!copiedStates[codeId]) {
+                        e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.background = isDarkTheme ? '#555' : '#e1e4e8';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!copiedStates[codeId]) {
+                        e.currentTarget.style.opacity = '0.8';
+                        e.currentTarget.style.background = isDarkTheme ? '#444' : '#f1f3f4';
+                      }
                     }}
                   >
-                    <button
-                      onClick={() => copyToClipboard(codeContent, codeId)}
-                      style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        background: copiedStates[codeId] 
-                          ? '#28a745' 
-                          : isDarkTheme 
-                            ? '#444' 
-                            : '#f1f3f4',
-                        color: copiedStates[codeId] 
-                          ? 'white' 
-                          : isDarkTheme 
-                            ? '#e1e4e8' 
-                            : '#24292e',
-                        border: copiedStates[codeId] 
-                          ? '1px solid #28a745' 
-                          : isDarkTheme 
-                            ? '1px solid #555' 
-                            : '1px solid #d1d5da',
-                        borderRadius: '6px',
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        opacity: 0.8,
-                        transition: 'all 0.2s ease',
-                        zIndex: 10,
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!copiedStates[codeId]) {
-                          e.currentTarget.style.opacity = '1';
-                          e.currentTarget.style.background = isDarkTheme ? '#555' : '#e1e4e8';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!copiedStates[codeId]) {
-                          e.currentTarget.style.opacity = '0.8';
-                          e.currentTarget.style.background = isDarkTheme ? '#444' : '#f1f3f4';
-                        }
-                      }}
-                    >
-                      {copiedStates[codeId] ? 'Copied!' : 'Copy'}
-                    </button>
-                    <code
-                      className={className}
-                      style={{
-                        background: 'transparent',
-                        color: isDarkTheme ? '#e6edf3' : '#24292f',
+                    {copiedStates[codeId] ? 'Copied!' : 'Copy'}
+                  </button>
+                  <SyntaxHighlighter
+                    style={isDarkTheme ? oneDark : oneLight}
+                    language={language}
+                    PreTag="div"
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: '6px',
+                      border: isDarkTheme ? '1px solid #30363d' : '1px solid #d1d5da',
+                      boxShadow: isDarkTheme ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                    }}
+                    codeTagProps={{
+                      style: {
                         fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
                         fontSize: '14px',
                         lineHeight: '1.45',
-                      }}
-                      {...props}
-                    >
-                      {children}
-                    </code>
-                  </pre>
+                      }
+                    }}
+                  >
+                    {codeContent}
+                  </SyntaxHighlighter>
                 </div>
               );
             }
