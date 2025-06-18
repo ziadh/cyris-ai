@@ -1,5 +1,5 @@
 "use client";
-import { ChevronDown, Settings } from "lucide-react";
+import { ChevronDown, Settings, X, Image as ImageIcon } from "lucide-react";
 import ProviderIcon from "./ProviderIcon";
 import { useRef, useState, useEffect } from "react";
 import { AI_MODELS, AUTOPICK_MODEL } from "@/lib/constants";
@@ -56,6 +56,8 @@ export default function ChatInput({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [hasRequiredKey, setHasRequiredKey] = useState(true);
   const [keyUpdateTrigger, setKeyUpdateTrigger] = useState(0);
+  const [showImageSuggestion, setShowImageSuggestion] = useState(false);
+  const [dismissedImageSuggestion, setDismissedImageSuggestion] = useState(false);
 
   useEffect(() => {
     if (isImageGenerationModel(selectedModel)) {
@@ -66,8 +68,32 @@ export default function ChatInput({
     }
   }, [selectedModel, keyUpdateTrigger]);
 
+  // Detect image-related keywords in prompt
+  useEffect(() => {
+    if (dismissedImageSuggestion || isImageGenerationModel(selectedModel)) {
+      setShowImageSuggestion(false);
+      return;
+    }
+
+    const imageKeywords = /\b(img|image|images|pic|pics|picture|pictures|photo|photos|generate|create|make|draw|design)\b/i;
+    const hasImageKeyword = imageKeywords.test(prompt);
+    
+    setShowImageSuggestion(hasImageKeyword && prompt.trim().length > 0);
+  }, [prompt, selectedModel, dismissedImageSuggestion]);
+
   const handleKeyUpdated = () => {
     setKeyUpdateTrigger((prev) => prev + 1);
+  };
+
+  const handleSwitchToImageModel = () => {
+    setSelectedModel("openai/gpt-image-1");
+    setShowImageSuggestion(false);
+    setDismissedImageSuggestion(true);
+  };
+
+  const handleDismissImageSuggestion = () => {
+    setShowImageSuggestion(false);
+    setDismissedImageSuggestion(true);
   };
 
   const isImageModel = isImageGenerationModel(selectedModel);
@@ -82,6 +108,40 @@ export default function ChatInput({
             : "border-gray-200 bg-gray-50"
         }`}
       >
+        {/* Image Model Suggestion Popup */}
+        {showImageSuggestion && (
+          <div className={`mb-3 p-3 rounded-lg border-l-4 ${
+            isDarkTheme
+              ? "bg-blue-500/10 border-blue-500 text-blue-300"
+              : "bg-blue-50 border-blue-500 text-blue-800"
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  Want to generate an image?
+                </span>
+                <button
+                  onClick={handleSwitchToImageModel}
+                  className={`text-sm underline hover:no-underline cursor-pointer ${
+                    isDarkTheme ? "text-blue-400" : "text-blue-600"
+                  }`}
+                >
+                  Switch to GPT-Image-1
+                </button>
+              </div>
+              <button
+                onClick={handleDismissImageSuggestion}
+                className={`p-1 rounded hover:bg-black/10 ${
+                  isDarkTheme ? "text-blue-300 hover:text-blue-200" : "text-blue-600 hover:text-blue-500"
+                }`}
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
           <div className="relative sm:flex-shrink-0" ref={dropdownRef}>
             <button
