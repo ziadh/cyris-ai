@@ -194,6 +194,43 @@ export default function ChatSidebar({
                           </svg>
                           Help & Tour
                         </button>
+                        
+                        {/* Separator */}
+                        <div className={`border-t my-1 ${isDarkTheme ? 'border-gray-600' : 'border-gray-200'}`}></div>
+                        
+                        {/* GitHub Link */}
+                        <button
+                          onClick={() => {
+                            window.open("https://github.com/ziadh/cyris-ai", "_blank");
+                            setIsMenuOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-3 sm:py-2 text-sm ${isDarkTheme ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'} touch-manipulation flex items-center gap-2`}
+                          role="menuitem"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          View Source
+                        </button>
+                        
+                        {/* Portfolio Link */}
+                        <button
+                          onClick={() => {  
+                            window.open("https://ziadhussein.com/?ref=cyris-ai", "_blank");
+                            setIsMenuOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-3 sm:py-2 text-sm ${isDarkTheme ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'} touch-manipulation flex items-center gap-2`}
+                          role="menuitem"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          Developer
+                        </button>
+                        
+                        {/* Separator */}
+                        <div className={`border-t my-1 ${isDarkTheme ? 'border-gray-600' : 'border-gray-200'}`}></div>
+                        
                         <button
                           onClick={() => signOut()}
                           className={`block w-full text-left px-4 py-3 sm:py-2 text-sm ${isDarkTheme ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'} touch-manipulation`}

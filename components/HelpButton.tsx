@@ -83,6 +83,53 @@ export default function HelpButton({ onShowOnboarding, isDarkTheme }: HelpButton
                   </div>
                 </div>
               </button>
+
+              {/* Separator */}
+              <div className={`border-t my-2 ${
+                isDarkTheme ? "border-gray-700" : "border-gray-200"
+              }`}></div>
+
+              {/* GitHub Link */}
+              <button
+                onClick={() => {
+                  window.open("https://github.com/ziadh/cyris-ai", "_blank");
+                  setIsOpen(false);
+                }}
+                className={`w-full px-4 py-2 text-left text-sm flex items-center space-x-3 ${
+                  isDarkTheme 
+                    ? "hover:bg-gray-700 text-gray-300" 
+                    : "hover:bg-gray-50 text-gray-700"
+                } transition-colors`}
+              >
+                <span className="text-lg">🔗</span>
+                <div>
+                  <div className="font-medium">View Source</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Explore on GitHub
+                  </div>
+                </div>
+              </button>
+
+              {/* Portfolio Link */}
+              <button
+                onClick={() => {
+                  window.open("https://ziadhussein.com", "_blank");
+                  setIsOpen(false);
+                }}
+                className={`w-full px-4 py-2 text-left text-sm flex items-center space-x-3 ${
+                  isDarkTheme 
+                    ? "hover:bg-gray-700 text-gray-300" 
+                    : "hover:bg-gray-50 text-gray-700"
+                } transition-colors`}
+              >
+                <span className="text-lg">👨‍💻</span>
+                <div>
+                  <div className="font-medium">Developer Portfolio</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Ziad Hussein
+                  </div>
+                </div>
+              </button>
               
               <div className={`px-4 py-3 text-xs border-t mt-2 ${
                 isDarkTheme 
