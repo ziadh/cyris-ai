@@ -25,3 +25,21 @@ export function isHtmlContent(content: string): boolean {
   const htmlTags = /<(h[1-6]|p|ul|ol|li|pre|code|blockquote|strong|em|br)\b[^>]*>/i;
   return htmlTags.test(content);
 }
+
+// Utility function to detect if content contains Markdown
+export function isMarkdownContent(content: string): boolean {
+  // Check for common Markdown syntax patterns
+  const markdownPatterns = [
+    /^#{1,6}\s+/m,           // Headers: # ## ###
+    /```[\s\S]*?```/,        // Code blocks
+    /`[^`]+`/,               // Inline code
+    /^\s*[-*+]\s+/m,         // Unordered lists
+    /^\s*\d+\.\s+/m,         // Ordered lists
+    /^\s*>\s+/m,             // Blockquotes
+    /\*\*[^*]+\*\*/,         // Bold text
+    /\*[^*]+\*/,             // Italic text
+    /_[^_]+_/,               // Alternative italic
+  ];
+  
+  return markdownPatterns.some(pattern => pattern.test(content));
+}

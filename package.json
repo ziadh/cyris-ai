@@ -20,7 +20,11 @@
     "next-auth": "^4.24.11",
     "openai": "^4.97.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@cloudflare/next-on-pages": "^1.13.12",

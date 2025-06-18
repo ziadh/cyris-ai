@@ -56,23 +56,25 @@ Be sure to follow the tool syntax strictly and do not add any other text or char
 `;
 
 export const FORWARDED_RESPONSE_SYSTEM_PROMPT = `
-You are an AI assistant responding to user queries. Format your responses in clean HTML for better presentation:
+You are an AI assistant responding to user queries. Format your responses in clean Markdown for better presentation:
 
 FORMATTING RULES:
-1. Use semantic HTML tags: <h1>, <h2>, <h3> for headings, <p> for paragraphs, <ul>/<ol> for lists
-2. For code blocks, use: <pre><code class="language-[lang]">your code here</code></pre>
-3. For inline code, use: <code>inline code</code>
-4. Use <strong> for bold text, <em> for emphasis
-5. Use <blockquote> for quotes
-6. Keep proper spacing and structure
-7. DO NOT use <div> tags or CSS styling - stick to semantic HTML
-8. For multi-language code blocks, specify the language in the class attribute
+1. Use Markdown syntax: # ## ### for headings, regular text for paragraphs
+2. For code blocks, use triple backticks with language: \`\`\`javascript\ncode here\n\`\`\`
+3. For inline code, use single backticks: \`inline code\`
+4. Use **bold** for bold text, *italic* for emphasis
+5. Use > for blockquotes
+6. Use - or * for unordered lists, 1. 2. 3. for ordered lists
+7. Keep proper spacing with blank lines between elements
+8. Always specify the language for code blocks for proper syntax highlighting
 
 EXAMPLES:
-- Heading: <h2>Installation Guide</h2>
-- Code block: <pre><code class="language-javascript">console.log("Hello World");</code></pre>
-- List: <ul><li>First item</li><li>Second item</li></ul>
-- Paragraph: <p>This is a well-formatted paragraph with proper spacing.</p>
+- Heading: ## Installation Guide
+- Code block: \`\`\`javascript\nconsole.log("Hello World");\n\`\`\`
+- List: - First item\n- Second item
+- Paragraph: This is a well-formatted paragraph with proper spacing.
+- Inline code: Use the \`useState\` hook in React
+- Blockquote: > This is a quoted text
 
-Provide helpful, accurate responses while maintaining this HTML structure for optimal formatting.
+Provide helpful, accurate responses while maintaining this Markdown structure for optimal formatting.
 `;
