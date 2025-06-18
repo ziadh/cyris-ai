@@ -58,16 +58,46 @@ export default function ChatMessages({
     >
       {allMessagesToDisplay.length === 0 ? (
         <div className="h-full flex flex-col items-center justify-center text-center p-4">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">
-            Welcome to Cyris AI
-          </h2>
-          <p
-            className={`text-sm sm:text-base lg:text-lg ${
-              isDarkTheme ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            Start a conversation with our AI assistant
-          </p>
+          <div className="mb-6">
+            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <span className="text-3xl">🚀</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">
+              Welcome to Cyris AI
+            </h2>
+            <p
+              className={`text-sm sm:text-base lg:text-lg mb-4 ${
+                isDarkTheme ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              Start a conversation with our AI assistant
+            </p>
+            {/* Quick feature highlights */}
+            <div className="flex flex-wrap gap-2 justify-center mb-4">
+              <span className={`px-3 py-1 rounded-full text-xs ${
+                isDarkTheme ? "bg-blue-900/30 text-blue-300" : "bg-blue-100 text-blue-700"
+              }`}>
+                ⚡ Super Fast
+              </span>
+              <span className={`px-3 py-1 rounded-full text-xs ${
+                isDarkTheme ? "bg-green-900/30 text-green-300" : "bg-green-100 text-green-700"
+              }`}>
+                🧠 Smart Routing
+              </span>
+              <span className={`px-3 py-1 rounded-full text-xs ${
+                isDarkTheme ? "bg-purple-900/30 text-purple-300" : "bg-purple-100 text-purple-700"
+              }`}>
+                🎨 Image Gen
+              </span>
+            </div>
+            <p
+              className={`text-xs ${
+                isDarkTheme ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
+              💡 New here? Click the help button (?) to take a quick tour!
+            </p>
+          </div>
         </div>
       ) : (
         <>
@@ -151,7 +181,7 @@ export default function ChatMessages({
                                 model={message.modelId}
                                 className="w-3 h-3"
                               />
-                              <span>Powered by {getModelDisplayName(message.modelId)}</span>
+                              <span>{getModelDisplayName(message.modelId)}</span>
                             </div>
                           )}
                         </div>

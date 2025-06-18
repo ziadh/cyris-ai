@@ -18,6 +18,7 @@ interface ChatSidebarProps {
   handleDeleteChat: (chatId: string) => void;
   sidebarRef: React.RefObject<HTMLDivElement | null>;
   isSidebarOpen: boolean;
+  onShowOnboarding: () => void;
 }
 
 export default function ChatSidebar({
@@ -30,6 +31,7 @@ export default function ChatSidebar({
   handleDeleteChat,
   sidebarRef,
   isSidebarOpen,
+  onShowOnboarding,
 }: ChatSidebarProps) {
   const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -158,6 +160,19 @@ export default function ChatSidebar({
                       className={`absolute bottom-full mb-2 w-48 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none ${isDarkTheme ? 'bg-gray-700' : 'bg-white'}`}
                     >
                       <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                        <button
+                          onClick={() => {
+                            onShowOnboarding();
+                            setIsMenuOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-3 sm:py-2 text-sm ${isDarkTheme ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'} touch-manipulation flex items-center gap-2`}
+                          role="menuitem"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Help & Tour
+                        </button>
                         <button
                           onClick={() => signOut()}
                           className={`block w-full text-left px-4 py-3 sm:py-2 text-sm ${isDarkTheme ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'} touch-manipulation`}

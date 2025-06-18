@@ -6,6 +6,8 @@ import ChatSidebar from "../components/ChatSidebar";
 import ChatMessages from "../components/ChatMessages";
 import ChatInput from "../components/ChatInput";
 import ConfirmationModal from "../components/ConfirmationModal";
+import OnboardingFlow from "../components/OnboardingFlow";
+import HelpButton from "../components/HelpButton";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ChatService, ChatData } from "@/lib/chatService";
@@ -51,9 +53,24 @@ export default function Home() {
     chatTitle: "",
   });
 
+  // State for onboarding flow
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   useEffect(() => {
     setIsAuthenticated(!!session?.user);
   }, [session]);
+
+  // Check if user has seen onboarding
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem("hasSeenOnboarding");
+    if (!hasSeenOnboarding) {
+      // Show onboarding after a short delay for better UX
+      const timer = setTimeout(() => {
+        setShowOnboarding(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -425,6 +442,7 @@ export default function Home() {
           handleDeleteChat={handleDeleteChat}
           sidebarRef={sidebarRef}
           isSidebarOpen={isSidebarOpen}
+          onShowOnboarding={() => setShowOnboarding(true)}
         />
 
         <div className="flex-1 flex flex-col min-h-0 w-full">
@@ -465,7 +483,10 @@ export default function Home() {
               />
               <h1 className="text-lg sm:text-xl font-bold">Cyris AI</h1>
             </div>
-            <div className="w-10"></div>
+            <HelpButton 
+              onShowOnboarding={() => setShowOnboarding(true)}
+              isDarkTheme={isDarkTheme}
+            />
           </div>
 
           {/* UPDATED: Pass forwardingMessage to ChatMessages */}
@@ -506,6 +527,13 @@ export default function Home() {
         cancelText="Cancel"
         isDarkTheme={isDarkTheme}
         isDestructive={true}
+      />
+
+      {/* Onboarding Flow */}
+      <OnboardingFlow
+        isVisible={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        isDarkTheme={isDarkTheme}
       />
     </>
   );
