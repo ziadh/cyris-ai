@@ -14,6 +14,11 @@ export const AI_MODELS = [
     name: "Gemini 2.5 Flash (05-20)",
     logoPath: "/assets/gemini.png",
   },
+  {
+    id: "openai/gpt-image-1",
+    name: "GPT-Image-1",
+    logoPath: "/assets/gpt.png",
+  },
 ];
 
 export const ROUTER_SYSTEM_PROMPT = `
@@ -25,7 +30,9 @@ DON'T TELL THE USER THAT YOU ARE USING A TOOL, JUST USE IT.
 Tool 1: Model Router
 Use this tool after to route the user's query to the best model based on the query's modality, complexity, and domain:
 
-${AI_MODELS.map((model) => `  • ${model.id} \n    – ${model.name}`).join("\n")}
+${AI_MODELS.filter(model => model.id !== "openai/gpt-image-1").map((model) => `  • ${model.id} \n    – ${model.name}`).join("\n")}
+
+IMPORTANT: NEVER route to image generation models. Image generation is only available through direct model selection, not through autopick.
 
 Routing rules:
 1. Analyze the query’s modality (text vs. image/audio), complexity, and domain.  

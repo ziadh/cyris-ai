@@ -89,17 +89,44 @@ export async function POST(request: NextRequest) {
 
       modelId = selectedModel;
       
-      try {
-        // Call the selected model directly with the original message
-        const directModelResponse = await openai.chat.completions.create({
-          model: selectedModel,
-          messages: [{ role: 'user', content: messageContent }],
-        });
-        assistantMessageContent = directModelResponse.choices[0].message.content || 'Error getting response from model.';
-        console.log(`📝 [${requestId}] Direct model (${selectedModel}) response received, length:`, assistantMessageContent.length);
-      } catch (error) {
-        console.error(`❌ [${requestId}] Error calling model ${selectedModel}:`, error);
-        assistantMessageContent = `Error getting response from ${selectedModel}. Please try again.`;
+      if (selectedModel === "openai/gpt-image-1") {
+        // Handle image generation through the generate-image route
+        console.log(`🎨 [${requestId}] Image generation request`);
+        
+        try {
+          const imageResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/generate-image`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: messageContent }),
+          });
+
+          if (imageResponse.ok) {
+            const imageResult = await imageResponse.json();
+            assistantMessageContent = `![Generated Image](${imageResult.imageUrl})`;
+            console.log(`🖼️ [${requestId}] Image generated successfully`);
+          } else {
+            throw new Error('Failed to generate image');
+          }
+        } catch (error) {
+          console.error(`❌ [${requestId}] Error generating image:`, error);
+          assistantMessageContent = `Error generating image. Please try again.`;
+        }
+      } else {
+        // Handle regular text models
+        try {
+          // Call the selected model directly with the original message
+          const directModelResponse = await openai.chat.completions.create({
+            model: selectedModel,
+            messages: [{ role: 'user', content: messageContent }],
+          });
+          assistantMessageContent = directModelResponse.choices[0].message.content || 'Error getting response from model.';
+          console.log(`📝 [${requestId}] Direct model (${selectedModel}) response received, length:`, assistantMessageContent.length);
+        } catch (error) {
+          console.error(`❌ [${requestId}] Error calling model ${selectedModel}:`, error);
+          assistantMessageContent = `Error getting response from ${selectedModel}. Please try again.`;
+        }
       }
     }
 

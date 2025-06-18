@@ -2,6 +2,7 @@
 import ProviderIcon from "./ProviderIcon";
 import { parseRoutePrompt } from "@/lib/utils";
 import { AI_MODELS } from "@/lib/constants";
+import Image from "next/image";
 
 interface ChatMessagesProps {
   currentMessages: Array<{ role: string; content: string; modelId?: string }>;
@@ -92,7 +93,24 @@ export default function ChatMessages({
                     // Regular AI response content
                     return (
                       <div>
-                        <div className="mb-2">{message.content}</div>
+                        <div className="mb-2">
+                          {/* Check if content is an image markdown */}
+                          {message.content.startsWith('![Generated Image](') ? (
+                            <div className="space-y-2">
+                              <div className="relative">
+                                <img 
+                                  src={message.content.match(/\(([^)]+)\)/)?.[1] || ''} 
+                                  alt="Generated Image" 
+                                  className="max-w-full h-auto rounded-lg shadow-lg"
+                                  style={{ maxHeight: '400px', maxWidth: '100%' }}
+                                />
+                              </div>
+                              <p className="text-sm opacity-75">🎨 Generated image</p>
+                            </div>
+                          ) : (
+                            message.content
+                          )}
+                        </div>
                         {/* Model information footer */}
                         {message.modelId && (
                           <div className={`flex items-center gap-1.5 text-xs ${
