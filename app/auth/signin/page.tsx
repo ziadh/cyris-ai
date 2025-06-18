@@ -7,7 +7,7 @@ import { Github, Chrome, Moon, Sun } from "lucide-react";
 
 function SignInContent() {
   const [providers, setProviders] = useState<any>(null);
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [isDarkTheme, setIsDarkTheme] = useState<boolean | null>(null);
 
   useEffect(() => {
     const fetchProviders = async () => {
@@ -16,9 +16,14 @@ function SignInContent() {
     };
     fetchProviders();
 
-    // Match system theme preference
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setIsDarkTheme(prefersDark);
+    // Load saved theme preference or fall back to system preference
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme !== null) {
+      setIsDarkTheme(savedTheme === "dark");
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setIsDarkTheme(prefersDark);
+    }
   }, []);
 
   const getProviderIcon = (providerId: string) => {
@@ -32,6 +37,15 @@ function SignInContent() {
     }
   };
 
+  // Show minimal loading screen while determining theme
+  if (isDarkTheme === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex items-center justify-center min-h-screen relative ${
       isDarkTheme ? "bg-gray-900 text-white" : "bg-white text-gray-900"
@@ -43,7 +57,11 @@ function SignInContent() {
           <h1 className="text-lg font-semibold">Cyris AI</h1>
         </div>
         <button
-          onClick={() => setIsDarkTheme(prev => !prev)}
+          onClick={() => setIsDarkTheme(prev => {
+            const newTheme = !prev;
+            localStorage.setItem("theme", newTheme ? "dark" : "light");
+            return newTheme;
+          })}
           className={`p-2 rounded-lg ${
             isDarkTheme ? "hover:bg-gray-800" : "hover:bg-gray-100"
           }`}

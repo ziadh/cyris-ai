@@ -23,7 +23,7 @@ export default function Home() {
   const [currentMessages, setCurrentMessages] = useState<
     { role: string; content: string; modelId?: string }[]
   >([]);
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [isDarkTheme, setIsDarkTheme] = useState<boolean | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // ADD THIS: State for forwarding message
@@ -56,11 +56,19 @@ export default function Home() {
     setIsAuthenticated(!!session?.user);
   }, [session]);
 
-  // Effect for theme and loading chats
+  // Effect for theme initialization (runs once on mount)
   useEffect(() => {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setIsDarkTheme(prefersDark);
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme !== null) {
+      setIsDarkTheme(savedTheme === "dark");
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setIsDarkTheme(prefersDark);
+    }
+  }, []);
 
+  // Effect for loading chats
+  useEffect(() => {
     async function loadChats() {
       if (status === "loading") return;
       
@@ -288,7 +296,11 @@ export default function Home() {
     }
 
   function toggleTheme() {
-    setIsDarkTheme((prev) => !prev);
+    setIsDarkTheme((prev) => {
+      const newTheme = !prev;
+      localStorage.setItem("theme", newTheme ? "dark" : "light");
+      return newTheme;
+    });
   }
 
   function toggleSidebar() {
@@ -361,6 +373,17 @@ export default function Home() {
       console.error("Error deleting chat:", error);
       // You could add a toast notification here for better UX
     }
+  }
+
+  // Show minimal loading screen while determining theme
+  if (isDarkTheme === null) {
+    return (
+      <div className="flex h-screen bg-white">
+        <div className="flex items-center justify-center w-full">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      </div>
+    );
   }
 
   return (
