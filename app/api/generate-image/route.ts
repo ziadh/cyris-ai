@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     })
 
     const res = await openai.images.generate({
-      model: 'gpt-image-1',
+      model: 'dall-e-3',
       prompt,
       n: 1,
       size: '1024x1024',
@@ -45,6 +45,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ imageUrl })
   } catch (error: any) {
     console.error('Error generating image:', error)
+    console.error('Error details:', {
+      message: error?.message,
+      status: error?.status,
+      code: error?.code,
+      type: error?.type
+    })
     
     // Handle specific OpenAI API errors
     if (error?.status === 401) {

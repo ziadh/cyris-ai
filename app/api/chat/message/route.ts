@@ -114,13 +114,42 @@ export async function POST(request: NextRequest) {
               }),
             });
 
+            // Helper function to safely parse JSON response
+            const safeParseResponse = async (response: Response) => {
+              const contentType = response.headers.get('content-type');
+              const isJson = contentType && contentType.includes('application/json');
+              
+              if (!isJson) {
+                // If response is not JSON, read as text to get the actual error
+                const textResponse = await response.text();
+                console.error(`🚨 [${requestId}] Non-JSON response:`, textResponse);
+                throw new Error(`Server error: ${textResponse.substring(0, 200)}...`);
+              }
+              
+              try {
+                return await response.json();
+              } catch (parseError) {
+                // If JSON parsing fails, read as text to get the actual error
+                const textResponse = await response.text();
+                console.error(`🚨 [${requestId}] JSON parse error. Raw response:`, textResponse);
+                throw new Error(`Invalid response format: ${textResponse.substring(0, 200)}...`);
+              }
+            };
+
             if (imageResponse.ok) {
-              const imageResult = await imageResponse.json();
+              const imageResult = await safeParseResponse(imageResponse);
               assistantMessageContent = `![Generated Image](${imageResult.imageUrl})`;
               console.log(`🖼️ [${requestId}] Image generated successfully`);
             } else {
-              const errorResult = await imageResponse.json();
-              throw new Error(errorResult.error || 'Failed to generate image');
+              console.error(`🚨 [${requestId}] Image generation failed with status:`, imageResponse.status);
+              try {
+                const errorResult = await safeParseResponse(imageResponse);
+                throw new Error(errorResult.error || 'Failed to generate image');
+              } catch (parseError: any) {
+                // If we can't parse the error response, provide a generic error with status
+                console.error(`🚨 [${requestId}] Error parsing error response:`, parseError.message);
+                throw new Error(`Image generation failed (HTTP ${imageResponse.status}): ${parseError.message}`);
+              }
             }
           }
         } catch (error: any) {

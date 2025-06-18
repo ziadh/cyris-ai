@@ -1,9 +1,11 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ProviderIcon from "./ProviderIcon";
 import MarkdownRenderer from "./MarkdownRenderer";
+import ImageViewer from "./ImageViewer";
 import { parseRoutePrompt, isMarkdownContent } from "@/lib/utils";
 import { AI_MODELS } from "@/lib/constants";
+import { Maximize2, Download } from "lucide-react";
 import Image from "next/image";
 
 interface ChatMessagesProps {
@@ -21,11 +23,36 @@ export default function ChatMessages({
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState('');
 
   // Helper function to get model display name
   const getModelDisplayName = (modelId: string): string => {
     const modelInfo = AI_MODELS.find(m => m.id === modelId);
     return modelInfo?.name || modelId;
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImageUrl(imageUrl);
+    setImageViewerOpen(true);
+  };
+
+  const handleQuickDownload = async (imageUrl: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `cyris-ai-image-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading image:', error);
+    }
   };
 
   // Combine regular messages with forwarding message if it exists
@@ -154,15 +181,40 @@ export default function ChatMessages({
                             {/* Check if content is an image markdown */}
                             {message.content.startsWith('![Generated Image](') ? (
                               <div className="space-y-2">
-                                <div className="relative">
+                                <div className="relative group">
                                   <img 
                                     src={message.content.match(/\(([^)]+)\)/)?.[1] || ''} 
                                     alt="Generated Image" 
-                                    className="max-w-full h-auto rounded-lg shadow-lg"
+                                    className="max-w-full h-auto rounded-lg shadow-lg cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-[1.02]"
                                     style={{ maxHeight: '250px', maxWidth: '100%' }}
+                                    onClick={() => handleImageClick(message.content.match(/\(([^)]+)\)/)?.[1] || '')}
                                   />
+                                  
+                                  {/* Hover overlay with action buttons */}
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => handleImageClick(message.content.match(/\(([^)]+)\)/)?.[1] || '')}
+                                        className="p-2 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all duration-200 transform hover:scale-110"
+                                        title="View Full Size"
+                                      >
+                                        <Maximize2 className="w-4 h-4 text-gray-700" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => handleQuickDownload(message.content.match(/\(([^)]+)\)/)?.[1] || '', e)}
+                                        className="p-2 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all duration-200 transform hover:scale-110"
+                                        title="Quick Download"
+                                      >
+                                        <Download className="w-4 h-4 text-gray-700" />
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
-                                <p className="text-xs sm:text-sm opacity-75">🎨 Generated image</p>
+                                
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs sm:text-sm opacity-75">🎨 Generated image</p>
+                                  <p className="text-xs opacity-60">Click to view full size</p>
+                                </div>
                               </div>
                             ) : isMarkdownContent(message.content) ? (
                               <MarkdownRenderer content={message.content} isDarkTheme={isDarkTheme} />
@@ -222,6 +274,14 @@ export default function ChatMessages({
           <div ref={messagesEndRef} />
         </>
       )}
+      
+      {/* Image Viewer Modal */}
+      <ImageViewer
+        isOpen={imageViewerOpen}
+        onClose={() => setImageViewerOpen(false)}
+        imageUrl={selectedImageUrl}
+        isDarkTheme={isDarkTheme}
+      />
     </div>
   );
 }
