@@ -97,24 +97,35 @@ export async function POST(request: NextRequest) {
         console.log(`🎨 [${requestId}] Image generation request`);
         
         try {
-          const imageResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/generate-image`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ prompt: messageContent }),
-          });
-
-          if (imageResponse.ok) {
-            const imageResult = await imageResponse.json();
-            assistantMessageContent = `![Generated Image](${imageResult.imageUrl})`;
-            console.log(`🖼️ [${requestId}] Image generated successfully`);
+          // Get BYOK API key from request headers
+          const byokApiKey = request.headers.get('x-byok-api-key');
+          
+          if (!byokApiKey) {
+            assistantMessageContent = `Error: OpenAI API key is required for image generation. Please configure your API key in settings.`;
           } else {
-            throw new Error('Failed to generate image');
+            const imageResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/generate-image`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                prompt: messageContent,
+                apiKey: byokApiKey
+              }),
+            });
+
+            if (imageResponse.ok) {
+              const imageResult = await imageResponse.json();
+              assistantMessageContent = `![Generated Image](${imageResult.imageUrl})`;
+              console.log(`🖼️ [${requestId}] Image generated successfully`);
+            } else {
+              const errorResult = await imageResponse.json();
+              throw new Error(errorResult.error || 'Failed to generate image');
+            }
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error(`❌ [${requestId}] Error generating image:`, error);
-          assistantMessageContent = `Error generating image. Please try again.`;
+          assistantMessageContent = `Error generating image: ${error.message || 'Please try again.'}`;
         }
       } else {
         // Handle regular text models
