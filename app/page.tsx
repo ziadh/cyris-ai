@@ -531,7 +531,7 @@ export default function Home() {
           onShowOnboarding={() => setShowOnboarding(true)}
         />
 
-        <div className="flex-1 flex flex-col min-h-0 w-full">
+        <div className="flex-1 flex flex-col min-h-0 min-w-0 md:max-w-[calc(100%-320px)] lg:max-w-[calc(100%-256px)] xl:max-w-[calc(100%-288px)]">
           {/* Mobile header */}
           <div
             className={`md:hidden p-3 sm:p-4 flex justify-between items-center border-b ${

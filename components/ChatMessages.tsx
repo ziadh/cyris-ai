@@ -148,7 +148,7 @@ export default function ChatMessages({
   return (
     <div
       ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-3 sm:space-y-4"
+      className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-3 sm:space-y-4 min-w-0"
     >
       {allMessagesToDisplay.length === 0 ? (
         <div className="h-full flex flex-col items-center justify-center text-center p-4">
@@ -245,6 +245,8 @@ export default function ChatMessages({
                                     style={{
                                       maxHeight: "250px",
                                       maxWidth: "100%",
+                                      minWidth: "0",
+                                      width: "auto",
                                     }}
                                     onClick={() =>
                                       handleImageClick(

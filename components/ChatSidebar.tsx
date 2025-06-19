@@ -119,7 +119,7 @@ export default function ChatSidebar({
       ref={sidebarRef}
       className={`fixed inset-y-0 left-0 z-30 w-80 sm:w-64 p-3 sm:p-4 transform ${
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-      } transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:w-[20%] lg:w-[15%] border-r ${
+      } transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:w-80 lg:w-64 xl:w-72 md:min-w-[280px] lg:min-w-[256px] xl:min-w-[288px] md:max-w-[320px] border-r ${
         isDarkTheme
           ? "border-gray-700 bg-gray-800"
           : "border-gray-200 bg-gray-50"
