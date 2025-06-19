@@ -69,8 +69,28 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    setIsAuthenticated(!!session?.user);
-  }, [session]);
+    const wasAuthenticated = isAuthenticated;
+    const nowAuthenticated = !!session?.user;
+    
+    setIsAuthenticated(nowAuthenticated);
+    
+    // If user just signed in, migrate local chats
+    if (!wasAuthenticated && nowAuthenticated && status !== 'loading') {
+      migrateLocalChats();
+    }
+  }, [session, status]);
+
+  const migrateLocalChats = async () => {
+    try {
+      await ChatService.migrateLocalChatsToDatabase();
+      // Reload chats after migration
+      const chats = await ChatService.getChats(true);
+      setAllChats(chats);
+      console.log('Successfully migrated local chats to database');
+    } catch (error) {
+      console.error('Error migrating local chats:', error);
+    }
+  };
 
   // Check if user has seen onboarding
   useEffect(() => {
@@ -101,11 +121,6 @@ export default function Home() {
       if (status === "loading") return;
 
       const authenticated = !!session?.user;
-
-      if (authenticated && !isAuthenticated) {
-        await ChatService.migrateLocalChatsToDatabase();
-      }
-
       const chats = await ChatService.getChats(authenticated);
       setAllChats(chats);
 
@@ -289,6 +304,7 @@ export default function Home() {
           chatId: currentChatId,
           messageContent: trimmedPrompt,
           selectedModel,
+          isLocalChat: !isAuthenticated,
         }),
       });
 
@@ -298,27 +314,65 @@ export default function Home() {
 
       const result = await response.json();
 
-      // Extract the latest AI response from the returned chat object
-      const latestMessage = result.messages[result.messages.length - 1];
-      if (latestMessage && latestMessage.role === "assistant") {
-        const aiResponse = {
+      let aiResponse: {
+        role: string;
+        content: string;
+        modelId?: string;
+      };
+
+      if (result.isLocalResponse) {
+        // For unauthenticated users, the response contains just the message
+        aiResponse = {
           role: "assistant",
-          content: latestMessage.content,
-          modelId: latestMessage.modelId,
+          content: result.message.content,
+          modelId: result.message.modelId,
         };
         setCurrentMessages((prevMessages) => [...prevMessages, aiResponse]);
 
-        // Update the chat in allChats with the complete conversation
-        setAllChats((prevAllChats) =>
-          prevAllChats.map((chat) =>
-            chat.id === currentChatId
-              ? {
-                  ...chat,
-                  messages: [...chat.messages, userMessage, aiResponse],
-                }
-              : chat
-          )
-        );
+        // Update local chat storage with the complete conversation
+        if (currentChatId && !isAuthenticated) {
+          const updatedMessages = [...currentMessages, userMessage, aiResponse];
+          await ChatService.updateChat(
+            currentChatId,
+            updatedMessages,
+            isAuthenticated
+          );
+          
+          // Update the chat in allChats
+          setAllChats((prevAllChats) =>
+            prevAllChats.map((chat) =>
+              chat.id === currentChatId
+                ? {
+                    ...chat,
+                    messages: updatedMessages,
+                  }
+                : chat
+            )
+          );
+        }
+      } else {
+        // For authenticated users, extract from the returned chat object
+        const latestMessage = result.messages[result.messages.length - 1];
+        if (latestMessage && latestMessage.role === "assistant") {
+          aiResponse = {
+            role: "assistant",
+            content: latestMessage.content,
+            modelId: latestMessage.modelId,
+          };
+          setCurrentMessages((prevMessages) => [...prevMessages, aiResponse]);
+
+          // Update the chat in allChats with the complete conversation
+          setAllChats((prevAllChats) =>
+            prevAllChats.map((chat) =>
+              chat.id === currentChatId
+                ? {
+                    ...chat,
+                    messages: [...chat.messages, userMessage, aiResponse],
+                  }
+                : chat
+            )
+          );
+        }
       }
 
       // Clear the forwarding message since we now have the AI response
@@ -511,6 +565,36 @@ export default function Home() {
               isDarkTheme={isDarkTheme}
             />
           </div>
+
+          {/* Local Storage Notification for Unauthenticated Users */}
+          {!isAuthenticated && currentMessages.length > 0 && (
+            <div className={`mx-4 mt-3 p-3 rounded-lg border-l-4 ${
+              isDarkTheme
+                ? "bg-blue-500/10 border-blue-500 text-blue-300"
+                : "bg-blue-50 border-blue-500 text-blue-800"
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-sm">
+                    Your chats are saved locally. Sign in to save them permanently and access them across devices.
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* UPDATED: Pass forwardingMessage to ChatMessages */}
           <ChatMessages

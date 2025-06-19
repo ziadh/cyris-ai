@@ -24,11 +24,11 @@ export default function ChatMessages({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
-  const [selectedImageUrl, setSelectedImageUrl] = useState('');
+  const [selectedImageUrl, setSelectedImageUrl] = useState("");
 
   // Helper function to get model display name
   const getModelDisplayName = (modelId: string): string => {
-    const modelInfo = AI_MODELS.find(m => m.id === modelId);
+    const modelInfo = AI_MODELS.find((m) => m.id === modelId);
     return modelInfo?.name || modelId;
   };
 
@@ -43,7 +43,7 @@ export default function ChatMessages({
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = `cyris-ai-image-${Date.now()}.png`;
       document.body.appendChild(link);
@@ -51,7 +51,7 @@ export default function ChatMessages({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading image:', error);
+      console.error("Error downloading image:", error);
     }
   };
 
@@ -79,7 +79,7 @@ export default function ChatMessages({
   }, [allMessagesToDisplay[allMessagesToDisplay.length - 1]?.content]);
 
   return (
-    <div 
+    <div
       ref={messagesContainerRef}
       className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-3 sm:space-y-4"
     >
@@ -99,24 +99,7 @@ export default function ChatMessages({
             >
               Start a conversation with our AI assistant
             </p>
-            {/* Quick feature highlights */}
-            <div className="flex flex-wrap gap-2 justify-center mb-4">
-              <span className={`px-3 py-1 rounded-full text-xs ${
-                isDarkTheme ? "bg-blue-900/30 text-blue-300" : "bg-blue-100 text-blue-700"
-              }`}>
-                ⚡ Super Fast
-              </span>
-              <span className={`px-3 py-1 rounded-full text-xs ${
-                isDarkTheme ? "bg-green-900/30 text-green-300" : "bg-green-100 text-green-700"
-              }`}>
-                🧠 Smart Routing
-              </span>
-              <span className={`px-3 py-1 rounded-full text-xs ${
-                isDarkTheme ? "bg-purple-900/30 text-purple-300" : "bg-purple-100 text-purple-700"
-              }`}>
-                🎨 Image Gen
-              </span>
-            </div>
+
             <p
               className={`text-xs ${
                 isDarkTheme ? "text-gray-500" : "text-gray-400"
@@ -179,29 +162,57 @@ export default function ChatMessages({
                         <div className="w-full">
                           <div className="mb-2 overflow-hidden">
                             {/* Check if content is an image markdown */}
-                            {message.content.startsWith('![Generated Image](') ? (
+                            {message.content.startsWith(
+                              "![Generated Image]("
+                            ) ? (
                               <div className="space-y-2">
                                 <div className="relative group">
-                                  <img 
-                                    src={message.content.match(/\(([^)]+)\)/)?.[1] || ''} 
-                                    alt="Generated Image" 
+                                  <img
+                                    src={
+                                      message.content.match(
+                                        /\(([^)]+)\)/
+                                      )?.[1] || ""
+                                    }
+                                    alt="Generated Image"
                                     className="max-w-full h-auto rounded-lg shadow-lg cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-[1.02]"
-                                    style={{ maxHeight: '250px', maxWidth: '100%' }}
-                                    onClick={() => handleImageClick(message.content.match(/\(([^)]+)\)/)?.[1] || '')}
+                                    style={{
+                                      maxHeight: "250px",
+                                      maxWidth: "100%",
+                                    }}
+                                    onClick={() =>
+                                      handleImageClick(
+                                        message.content.match(
+                                          /\(([^)]+)\)/
+                                        )?.[1] || ""
+                                      )
+                                    }
                                   />
-                                  
+
                                   {/* Hover overlay with action buttons */}
                                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
                                     <div className="flex gap-2">
                                       <button
-                                        onClick={() => handleImageClick(message.content.match(/\(([^)]+)\)/)?.[1] || '')}
+                                        onClick={() =>
+                                          handleImageClick(
+                                            message.content.match(
+                                              /\(([^)]+)\)/
+                                            )?.[1] || ""
+                                          )
+                                        }
                                         className="p-2 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all duration-200 transform hover:scale-110"
                                         title="View Full Size"
                                       >
                                         <Maximize2 className="w-4 h-4 text-gray-700" />
                                       </button>
                                       <button
-                                        onClick={(e) => handleQuickDownload(message.content.match(/\(([^)]+)\)/)?.[1] || '', e)}
+                                        onClick={(e) =>
+                                          handleQuickDownload(
+                                            message.content.match(
+                                              /\(([^)]+)\)/
+                                            )?.[1] || "",
+                                            e
+                                          )
+                                        }
                                         className="p-2 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all duration-200 transform hover:scale-110"
                                         title="Quick Download"
                                       >
@@ -210,30 +221,45 @@ export default function ChatMessages({
                                     </div>
                                   </div>
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between">
-                                  <p className="text-xs sm:text-sm opacity-75">🎨 Generated image</p>
-                                  <p className="text-xs opacity-60">Click to view full size</p>
+                                  <p className="text-xs sm:text-sm opacity-75">
+                                    🎨 Generated image
+                                  </p>
+                                  <p className="text-xs opacity-60">
+                                    Click to view full size
+                                  </p>
                                 </div>
                               </div>
                             ) : isMarkdownContent(message.content) ? (
-                              <MarkdownRenderer content={message.content} isDarkTheme={isDarkTheme} />
+                              <MarkdownRenderer
+                                content={message.content}
+                                isDarkTheme={isDarkTheme}
+                              />
                             ) : (
-                              <div className="break-words whitespace-pre-wrap">{message.content}</div>
+                              <div className="break-words whitespace-pre-wrap">
+                                {message.content}
+                              </div>
                             )}
                           </div>
                           {/* Model information footer */}
                           {message.modelId && (
-                            <div className={`flex items-center gap-1.5 text-xs ${
-                              isDarkTheme ? "text-gray-400" : "text-gray-600"
-                            } border-t ${
-                              isDarkTheme ? "border-gray-700" : "border-gray-300"
-                            } pt-2 mt-2`}>
+                            <div
+                              className={`flex items-center gap-1.5 text-xs ${
+                                isDarkTheme ? "text-gray-400" : "text-gray-600"
+                              } border-t ${
+                                isDarkTheme
+                                  ? "border-gray-700"
+                                  : "border-gray-300"
+                              } pt-2 mt-2`}
+                            >
                               <ProviderIcon
                                 model={message.modelId}
                                 className="w-3 h-3"
                               />
-                              <span>{getModelDisplayName(message.modelId)}</span>
+                              <span>
+                                {getModelDisplayName(message.modelId)}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -241,12 +267,14 @@ export default function ChatMessages({
                     })()}
                   </>
                 ) : (
-                  <div className="break-words whitespace-pre-wrap">{message.content}</div>
+                  <div className="break-words whitespace-pre-wrap">
+                    {message.content}
+                  </div>
                 )}
               </div>
             </div>
           ))}
-          
+
           {/* Only show loading indicator if loading and no forwarding message */}
           {loading && !forwardingMessage && (
             <div className="flex justify-start">
@@ -269,12 +297,12 @@ export default function ChatMessages({
               </div>
             </div>
           )}
-          
+
           {/* Invisible element to scroll to */}
           <div ref={messagesEndRef} />
         </>
       )}
-      
+
       {/* Image Viewer Modal */}
       <ImageViewer
         isOpen={imageViewerOpen}

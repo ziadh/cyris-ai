@@ -8,6 +8,7 @@ import { Github, Chrome, Moon, Sun } from "lucide-react";
 function SignInContent() {
   const [providers, setProviders] = useState<any>(null);
   const [isDarkTheme, setIsDarkTheme] = useState<boolean | null>(null);
+  const [hasLocalChats, setHasLocalChats] = useState(false);
 
   useEffect(() => {
     const fetchProviders = async () => {
@@ -23,6 +24,17 @@ function SignInContent() {
     } else {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       setIsDarkTheme(prefersDark);
+    }
+
+    // Check if user has local chats
+    const localChats = localStorage.getItem("cyrisUserChats");
+    if (localChats) {
+      try {
+        const parsedChats = JSON.parse(localChats);
+        setHasLocalChats(Array.isArray(parsedChats) && parsedChats.length > 0);
+      } catch (error) {
+        console.error("Error parsing local chats:", error);
+      }
     }
   }, []);
 
@@ -79,9 +91,18 @@ function SignInContent() {
         <h2 className="text-xl font-semibold text-center">
           Welcome to Cyris AI
         </h2>
-        <p className="text-center text-gray-400">
-          Sign in to access your intelligent AI conversations and chat history
-        </p>
+        <div className="text-center">
+          <p className="text-gray-400 mb-2">
+            Sign in to access your intelligent AI conversations and chat history
+          </p>
+          {hasLocalChats && (
+            <p className={`text-sm px-3 py-2 rounded-lg ${
+              isDarkTheme ? "bg-blue-500/10 text-blue-300" : "bg-blue-50 text-blue-600"
+            }`}>
+              ✨ Your local conversations will be automatically saved to your account
+            </p>
+          )}
+        </div>
         <div className="flex flex-col gap-4 w-full max-w-sm">
           {providers &&
             Object.values(providers).map((provider: any) => (

@@ -124,12 +124,22 @@ export class ChatService {
       const parsedChats = JSON.parse(localChats);
       if (!Array.isArray(parsedChats) || parsedChats.length === 0) return;
 
-      for (const chat of parsedChats) {
-        await this.saveChat(chat, true);
-      }
+      // Use the bulk migration endpoint for better performance
+      const response = await fetch('/api/chats/migrate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ localChats: parsedChats }),
+      });
 
-      localStorage.removeItem(this.LOCAL_STORAGE_KEY);
-      console.log('Successfully migrated local chats to database');
+      if (response.ok) {
+        const result = await response.json();
+        localStorage.removeItem(this.LOCAL_STORAGE_KEY);
+        console.log('Successfully migrated local chats to database:', result.message);
+      } else {
+        console.error('Failed to migrate chats:', response.statusText);
+      }
     } catch (error) {
       console.error('Error migrating local chats to database:', error);
     }

@@ -23,24 +23,24 @@ export async function POST(request: NextRequest) {
   const requestId = Math.random().toString(36).substring(7);
   try {
     const session = await getServerSession(authOptions);
+    const isAuthenticated = !!session?.user?.id;
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { chatId, messageContent, selectedModel, isLocalChat } = await request.json();
+
+    console.log(`🔍 [${requestId}] Request received:`, { chatId, messageContent, selectedModel, isAuthenticated, isLocalChat });
+
+    // For authenticated users, proceed with database operations
+    if (isAuthenticated) {
+      await connectToDatabase();
+      const chat = await Chat.findOne({ id: chatId, userId: session.user.id });
+
+      if (!chat) {
+        return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
+      }
+
+      // Add user message to chat
+      chat.messages.push({ role: 'user', content: messageContent });
     }
-
-    const { chatId, messageContent, selectedModel } = await request.json();
-
-    console.log(`🔍 [${requestId}] Request received:`, { chatId, messageContent, selectedModel });
-    await connectToDatabase();
-
-    const chat = await Chat.findOne({ id: chatId, userId: session.user.id });
-
-    if (!chat) {
-      return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
-    }
-
-    // Add user message to chat
-    chat.messages.push({ role: 'user', content: messageContent });
 
     let assistantMessageContent: string;
     let modelId: string | undefined;
@@ -178,17 +178,36 @@ export async function POST(request: NextRequest) {
 
     console.log('🎯 Final modelId before pushing to messages:', modelId);
     
-    // Add assistant message to chat
-    const messageToAdd = { role: 'assistant', content: assistantMessageContent, modelId };
-    console.log('💾 Message object being pushed:', JSON.stringify(messageToAdd, null, 2));
-    chat.messages.push(messageToAdd);
+    // Create the assistant message
+    const assistantMessage = { role: 'assistant', content: assistantMessageContent, modelId };
+    console.log('💾 Message object being created:', JSON.stringify(assistantMessage, null, 2));
 
-    chat.updatedAt = new Date();
-    await chat.save();
-    
-    console.log('💽 Chat saved to database. Last message:', JSON.stringify(chat.messages[chat.messages.length - 1], null, 2));
+    // For authenticated users, save to database
+    if (isAuthenticated && session?.user?.id) {
+      await connectToDatabase();
+      const chat = await Chat.findOne({ id: chatId, userId: session.user.id });
+      
+      if (chat) {
+        // Add assistant message to chat
+        chat.messages.push(assistantMessage);
+        chat.updatedAt = new Date();
+        await chat.save();
+        
+        console.log('💽 Chat saved to database. Last message:', JSON.stringify(chat.messages[chat.messages.length - 1], null, 2));
+        return NextResponse.json(chat);
+      } else {
+        return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
+      }
+    } else {
+      // For unauthenticated users, return the assistant message
+      // The frontend will handle local storage
+      console.log('📱 Returning response for unauthenticated user');
+      return NextResponse.json({ 
+        message: assistantMessage,
+        isLocalResponse: true 
+      });
+    }
 
-    return NextResponse.json(chat);
   } catch (error) {
     console.error('Error processing message:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
