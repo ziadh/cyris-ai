@@ -257,6 +257,7 @@ export default function Home() {
           id: newChatId,
           title: chatTitle,
           messages: [userMessage], // Save user message to backend
+          createdAt: new Date(),
         };
 
         const newChat = await ChatService.saveChat(
