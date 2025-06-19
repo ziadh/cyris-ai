@@ -2,6 +2,26 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 export const runtime = 'edge'
 
+// Helper function to download and convert image to base64
+async function downloadAndStoreImage(imageUrl: string): Promise<string> {
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.statusText}`);
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64 = buffer.toString('base64');
+    const mimeType = response.headers.get('content-type') || 'image/png';
+    
+    return `data:${mimeType};base64,${base64}`;
+  } catch (error) {
+    console.error('Error downloading image:', error);
+    throw error;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const { prompt, apiKey } = await request.json()
@@ -36,13 +56,20 @@ export async function POST(request: Request) {
     })
 
     // Extract the generated image URL
-    const imageUrl = res.data?.[0]?.url
+    const temporaryImageUrl = res.data?.[0]?.url
 
-    if (!imageUrl) {
+    if (!temporaryImageUrl) {
       return NextResponse.json({ error: 'Failed to generate image' }, { status: 500 })
     }
 
-    return NextResponse.json({ imageUrl })
+    // Download and convert to base64 to prevent expiration
+    console.log('Downloading and storing image to prevent expiration...')
+    const permanentImageUrl = await downloadAndStoreImage(temporaryImageUrl)
+
+    return NextResponse.json({ 
+      imageUrl: permanentImageUrl,
+      originalUrl: temporaryImageUrl // Keep for debugging
+    })
   } catch (error: any) {
     console.error('Error generating image:', error)
     console.error('Error details:', {

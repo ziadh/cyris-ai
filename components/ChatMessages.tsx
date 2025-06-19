@@ -5,8 +5,75 @@ import MarkdownRenderer from "./MarkdownRenderer";
 import ImageViewer from "./ImageViewer";
 import { parseRoutePrompt, isMarkdownContent } from "@/lib/utils";
 import { AI_MODELS } from "@/lib/constants";
-import { Maximize2, Download } from "lucide-react";
+import { Maximize2, Download, AlertTriangle } from "lucide-react";
 import Image from "next/image";
+
+// Image component with error handling for expired URLs
+function ImageWithErrorHandling({ 
+  src, 
+  alt, 
+  className, 
+  style, 
+  onClick, 
+  isDarkTheme 
+}: { 
+  src: string; 
+  alt: string; 
+  className?: string; 
+  style?: React.CSSProperties; 
+  onClick?: () => void; 
+  isDarkTheme: boolean;
+}) {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const handleLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  const handleError = () => {
+    setIsLoading(false);
+    setHasError(true);
+  };
+
+  if (hasError) {
+    return (
+      <div className={`flex flex-col items-center justify-center p-8 rounded-lg border-2 border-dashed ${
+        isDarkTheme ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'
+      }`} style={style}>
+        <AlertTriangle className="w-8 h-8 text-orange-500 mb-2" />
+        <p className={`text-sm font-medium mb-1 ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
+          Image Expired
+        </p>
+        <p className={`text-xs text-center ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>
+          This image URL has expired. OpenAI images are only available for 2 hours.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {isLoading && (
+        <div className={`flex items-center justify-center p-8 rounded-lg ${
+          isDarkTheme ? 'bg-gray-800' : 'bg-gray-100'
+        }`} style={style}>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        style={{ ...style, display: isLoading ? 'none' : 'block' }}
+        onClick={onClick}
+        onLoad={handleLoad}
+        onError={handleError}
+      />
+    </>
+  );
+}
 
 interface ChatMessagesProps {
   currentMessages: Array<{ role: string; content: string; modelId?: string }>;
@@ -167,7 +234,7 @@ export default function ChatMessages({
                             ) ? (
                               <div className="space-y-2">
                                 <div className="relative group">
-                                  <img
+                                  <ImageWithErrorHandling
                                     src={
                                       message.content.match(
                                         /\(([^)]+)\)/
@@ -186,6 +253,7 @@ export default function ChatMessages({
                                         )?.[1] || ""
                                       )
                                     }
+                                    isDarkTheme={isDarkTheme}
                                   />
 
                                   {/* Hover overlay with action buttons */}

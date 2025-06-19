@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { Download, ExternalLink, Copy, X, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { Download, ExternalLink, Copy, X, ZoomIn, ZoomOut, RotateCw, AlertTriangle } from 'lucide-react';
 
 interface ImageViewerProps {
   isOpen: boolean;
@@ -14,13 +14,28 @@ export default function ImageViewer({ isOpen, onClose, imageUrl, isDarkTheme }: 
   const [rotation, setRotation] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   if (!isOpen) return null;
+
+  const handleImageLoad = () => {
+    setIsLoading(false);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    setIsLoading(false);
+    setImageError(true);
+  };
 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
       const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error('Image may have expired or is no longer available');
+      }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -32,6 +47,7 @@ export default function ImageViewer({ isOpen, onClose, imageUrl, isDarkTheme }: 
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading image:', error);
+      alert('Failed to download image. The image may have expired or is no longer available.');
     } finally {
       setIsDownloading(false);
     }
@@ -188,17 +204,64 @@ export default function ImageViewer({ isOpen, onClose, imageUrl, isDarkTheme }: 
         {/* Image container */}
         <div className="flex-1 overflow-auto p-4 flex items-center justify-center">
           <div className="flex items-center justify-center min-h-full">
-            <img 
-              src={imageUrl}
-              alt="Generated Image"
-              className="max-w-none transition-transform duration-200"
-              style={{ 
-                transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-                cursor: zoom > 100 ? 'move' : 'zoom-in'
-              }}
-              onClick={zoom === 100 ? zoomIn : undefined}
-              onDoubleClick={resetView}
-            />
+            {isLoading && (
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <span className={`text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Loading image...
+                </span>
+              </div>
+            )}
+            
+            {imageError && (
+              <div className="flex flex-col items-center gap-4 max-w-md text-center">
+                <div className={`p-4 rounded-full ${isDarkTheme ? 'bg-red-500/20' : 'bg-red-100'}`}>
+                  <AlertTriangle className="w-8 h-8 text-red-500" />
+                </div>
+                <div>
+                  <h3 className={`font-medium mb-2 ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
+                    Image Unavailable
+                  </h3>
+                  <p className={`text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
+                    This image may have expired or is no longer available. OpenAI image URLs expire after 2 hours.
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      onClick={handleCopyLink}
+                      className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                        isDarkTheme 
+                          ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                      }`}
+                    >
+                      Copy URL
+                    </button>
+                    <button
+                      onClick={onClose}
+                      className="px-3 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {!isLoading && !imageError && (
+              <img 
+                src={imageUrl}
+                alt="Generated Image"
+                className="max-w-none transition-transform duration-200"
+                style={{ 
+                  transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
+                  cursor: zoom > 100 ? 'move' : 'zoom-in'
+                }}
+                onClick={zoom === 100 ? zoomIn : undefined}
+                onDoubleClick={resetView}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+              />
+            )}
           </div>
         </div>
         

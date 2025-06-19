@@ -71,11 +71,11 @@ export default function Home() {
   useEffect(() => {
     const wasAuthenticated = isAuthenticated;
     const nowAuthenticated = !!session?.user;
-    
+
     setIsAuthenticated(nowAuthenticated);
-    
+
     // If user just signed in, migrate local chats
-    if (!wasAuthenticated && nowAuthenticated && status !== 'loading') {
+    if (!wasAuthenticated && nowAuthenticated && status !== "loading") {
       migrateLocalChats();
     }
   }, [session, status]);
@@ -86,9 +86,9 @@ export default function Home() {
       // Reload chats after migration
       const chats = await ChatService.getChats(true);
       setAllChats(chats);
-      console.log('Successfully migrated local chats to database');
+      console.log("Successfully migrated local chats to database");
     } catch (error) {
-      console.error('Error migrating local chats:', error);
+      console.error("Error migrating local chats:", error);
     }
   };
 
@@ -217,8 +217,8 @@ export default function Home() {
       setTimeout(async () => {
         try {
           const routerResponse = await getBestModel(trimmedPrompt);
-          const routeInfo = parseRoutePrompt(routerResponse || '');
-          
+          const routeInfo = parseRoutePrompt(routerResponse || "");
+
           // Only show forwarding message if routing actually occurred
           if (routeInfo.isRouting && routeInfo.model) {
             setForwardingMessage({
@@ -228,7 +228,7 @@ export default function Home() {
           }
         } catch (error) {
           // Don't show forwarding message on error
-          console.error('Error getting routing decision:', error);
+          console.error("Error getting routing decision:", error);
         }
       }, 200);
     } else {
@@ -337,7 +337,7 @@ export default function Home() {
             updatedMessages,
             isAuthenticated
           );
-          
+
           // Update the chat in allChats
           setAllChats((prevAllChats) =>
             prevAllChats.map((chat) =>
@@ -560,7 +560,7 @@ export default function Home() {
               />
               <h1 className="text-lg sm:text-xl font-bold">Cyris AI</h1>
             </div>
-            <HelpButton 
+            <HelpButton
               onShowOnboarding={() => setShowOnboarding(true)}
               isDarkTheme={isDarkTheme}
             />
@@ -568,11 +568,13 @@ export default function Home() {
 
           {/* Local Storage Notification for Unauthenticated Users */}
           {!isAuthenticated && currentMessages.length > 0 && (
-            <div className={`mx-4 mt-3 p-3 rounded-lg border-l-4 ${
-              isDarkTheme
-                ? "bg-blue-500/10 border-blue-500 text-blue-300"
-                : "bg-blue-50 border-blue-500 text-blue-800"
-            }`}>
+            <div
+              className={`mx-4 mt-3 p-3 rounded-lg border-l-4 ${
+                isDarkTheme
+                  ? "bg-blue-500/10 border-blue-500 text-blue-300"
+                  : "bg-blue-50 border-blue-500 text-blue-800"
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <svg
@@ -589,7 +591,8 @@ export default function Home() {
                     />
                   </svg>
                   <span className="text-sm">
-                    Your chats are saved locally. Sign in to save them permanently and access them across devices.
+                    Your chats are saved locally. Sign in to save them
+                    permanently and access them across devices.
                   </span>
                 </div>
               </div>
