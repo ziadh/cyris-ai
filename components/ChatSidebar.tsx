@@ -4,14 +4,17 @@ import { Sun, Moon, Plus, Trash2, Share2 } from "lucide-react";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
 
+type Chat = {
+  id: string;
+  title: string;
+  messages: Array<{ role: string; content: string }>;
+  createdAt: Date;
+};
+
 interface ChatSidebarProps {
   isDarkTheme: boolean;
   toggleTheme: () => void;
-  allChats: Array<{
-    id: string;
-    title: string;
-    messages: Array<{ role: string; content: string }>;
-  }>;
+  allChats: Chat[];
   activeChatId: string | null;
   handleNewChat: () => void;
   handleSelectChat: (chatId: string) => void;
@@ -21,6 +24,55 @@ interface ChatSidebarProps {
   isSidebarOpen: boolean;
   onShowOnboarding: () => void;
 }
+
+type ChatGroup = {
+  label: string;
+  chats: Chat[];
+};
+
+const groupChatsByDate = (chats: Chat[]) => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const lastWeek = new Date(today);
+  lastWeek.setDate(lastWeek.getDate() - 7);
+  const lastMonth = new Date(today);
+  lastMonth.setDate(lastMonth.getDate() - 30);
+
+  // Sort chats by date, newest first
+  const sortedChats = [...chats].sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  const groups: ChatGroup[] = [
+    { label: 'Today', chats: [] },
+    { label: 'Yesterday', chats: [] },
+    { label: 'Last 7 Days', chats: [] },
+    { label: 'Last 30 Days', chats: [] },
+    { label: 'Older', chats: [] }
+  ];
+
+  sortedChats.forEach(chat => {
+    const chatDate = new Date(chat.createdAt);
+    chatDate.setHours(0, 0, 0, 0);
+
+    if (chatDate.getTime() === today.getTime()) {
+      groups[0].chats.push(chat);
+    } else if (chatDate.getTime() === yesterday.getTime()) {
+      groups[1].chats.push(chat);
+    } else if (chatDate >= lastWeek) {
+      groups[2].chats.push(chat);
+    } else if (chatDate >= lastMonth) {
+      groups[3].chats.push(chat);
+    } else {
+      groups[4].chats.push(chat);
+    }
+  });
+
+  // Only return groups that have chats
+  return groups.filter(group => group.chats.length > 0);
+};
 
 export default function ChatSidebar({
   isDarkTheme,
@@ -40,6 +92,9 @@ export default function ChatSidebar({
   const [hoveredChatId, setHoveredChatId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const profilePicRef = useRef<HTMLImageElement>(null);
+
+  // Group chats by date
+  const chatGroups = groupChatsByDate(allChats);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -70,13 +125,13 @@ export default function ChatSidebar({
           : "border-gray-200 bg-gray-50"
       } flex flex-col h-full overflow-y-auto`}
       style={{
-        msOverflowStyle: 'none', /* IE and Edge */
-        scrollbarWidth: 'none', /* Firefox */
+        msOverflowStyle: 'none',
+        scrollbarWidth: 'none',
       }}
     >
       <style jsx>{`
         .overflow-y-auto::-webkit-scrollbar {
-          display: none; /* Chrome, Safari and Opera */
+          display: none;
         }
         .overflow-y-auto::-webkit-scrollbar-thumb {
           display: none;
@@ -85,6 +140,7 @@ export default function ChatSidebar({
           display: none;
         }
       `}</style>
+      
       {/* Top section: Logo and Title */}
       <div className="flex items-center mb-4 sm:mb-6">
         <Image
@@ -98,7 +154,7 @@ export default function ChatSidebar({
       </div>
 
       {/* Chat controls and history */}
-      <div className="space-y-2 flex-grow overflow-y-auto mb-4">
+      <div className="space-y-4 flex-grow overflow-y-auto mb-4">
         <button
           className={`w-full py-3 sm:py-2 px-4 rounded-lg text-left flex items-center gap-2 text-sm sm:text-base ${
             isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
@@ -109,67 +165,79 @@ export default function ChatSidebar({
           New Chat
         </button>
 
-        {/* History items */}
-        {allChats.map((chat) => (
-          <div
-            key={chat.id}
-            className={`relative group py-3 sm:py-2 px-4 rounded-lg cursor-pointer flex items-center justify-between ${
-              isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
-            } ${
-              chat.id === activeChatId
-                ? isDarkTheme
-                  ? "bg-blue-700 text-white"
-                  : "bg-blue-200 text-blue-800"
-                : ""
-            } transition-all duration-200 touch-manipulation`}
-            onMouseEnter={() => setHoveredChatId(chat.id)}
-            onMouseLeave={() => setHoveredChatId(null)}
-          >
-            <div
-              onClick={() => handleSelectChat(chat.id)}
-              className="flex-1 truncate pr-2 text-sm sm:text-base"
-            >
-              {chat.title}
-            </div>
-            
-            {/* Action buttons - appear on hover */}
-            <div className={`flex items-center gap-1 transition-all duration-200 ${
-              hoveredChatId === chat.id
-                ? "opacity-100 translate-x-0"
-                : "opacity-0 translate-x-2 pointer-events-none"
+        {/* Grouped chat history */}
+        {chatGroups.map((group, index) => (
+          <div key={group.label} className="space-y-1">
+            {/* Group header */}
+            <h2 className={`text-xs font-semibold px-4 ${
+              isDarkTheme ? "text-gray-400" : "text-gray-500"
             }`}>
-              {/* Share Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleShareChat(chat.id);
-                }}
-                className={`flex-shrink-0 p-2 sm:p-1.5 rounded-md transition-all duration-200 ${
-                  isDarkTheme
-                    ? "hover:bg-blue-600 text-gray-400 hover:text-white"
-                    : "hover:bg-blue-500 text-gray-500 hover:text-white"
-                } touch-manipulation`}
-                title="Share chat"
+              {group.label}
+            </h2>
+            
+            {/* Group chats */}
+            {group.chats.map((chat) => (
+              <div
+                key={chat.id}
+                className={`relative group py-3 sm:py-2 px-4 rounded-lg cursor-pointer flex items-center justify-between ${
+                  isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-200"
+                } ${
+                  chat.id === activeChatId
+                    ? isDarkTheme
+                      ? "bg-blue-700 text-white"
+                      : "bg-blue-200 text-blue-800"
+                    : ""
+                } transition-all duration-200 touch-manipulation`}
+                onMouseEnter={() => setHoveredChatId(chat.id)}
+                onMouseLeave={() => setHoveredChatId(null)}
               >
-                <Share2 className="w-4 h-4" />
-              </button>
-              
-              {/* Delete Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteChat(chat.id);
-                }}
-                className={`flex-shrink-0 p-2 sm:p-1.5 rounded-md transition-all duration-200 ${
-                  isDarkTheme
-                    ? "hover:bg-red-600 text-gray-400 hover:text-white"
-                    : "hover:bg-red-500 text-gray-500 hover:text-white"
-                } touch-manipulation`}
-                title="Delete chat"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
+                <div
+                  onClick={() => handleSelectChat(chat.id)}
+                  className="flex-1 truncate pr-2 text-sm sm:text-base"
+                >
+                  {chat.title}
+                </div>
+                
+                {/* Action buttons - appear on hover */}
+                <div className={`flex items-center gap-1 transition-all duration-200 ${
+                  hoveredChatId === chat.id
+                    ? "opacity-100 translate-x-0"
+                    : "opacity-0 translate-x-2 pointer-events-none"
+                }`}>
+                  {/* Share Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShareChat(chat.id);
+                    }}
+                    className={`flex-shrink-0 p-2 sm:p-1.5 rounded-md transition-all duration-200 ${
+                      isDarkTheme
+                        ? "hover:bg-blue-600 text-gray-400 hover:text-white"
+                        : "hover:bg-blue-500 text-gray-500 hover:text-white"
+                    } touch-manipulation`}
+                    title="Share chat"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
+                  
+                  {/* Delete Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteChat(chat.id);
+                    }}
+                    className={`flex-shrink-0 p-2 sm:p-1.5 rounded-md transition-all duration-200 ${
+                      isDarkTheme
+                        ? "hover:bg-red-600 text-gray-400 hover:text-white"
+                        : "hover:bg-red-500 text-gray-500 hover:text-white"
+                    } touch-manipulation`}
+                    title="Delete chat"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         ))}
       </div>
