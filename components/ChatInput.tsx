@@ -1,5 +1,5 @@
 "use client";
-import { ChevronDown, Settings, X, Image as ImageIcon, ArrowRight } from "lucide-react";
+import { ChevronDown, Settings, X, Image as ImageIcon, ArrowRight, SendHorizonal } from "lucide-react";
 import ProviderIcon from "./ProviderIcon";
 import { useRef, useState, useEffect } from "react";
 import { AI_MODELS, AUTOPICK_MODEL } from "@/lib/constants";
@@ -420,7 +420,7 @@ export default function ChatInput({
               {loading ? (
                 <div className="w-5 h-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
               ) : (
-                <ArrowRight className="w-5 h-5" />
+                <SendHorizonal className="w-5 h-5" />
               )}
             </button>
           </div>
