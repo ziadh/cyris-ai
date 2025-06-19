@@ -202,27 +202,31 @@ export default function ChatMessages({
                 {message.role === "assistant" ? (
                   <>
                     {(() => {
-                      const routeInfo = parseRoutePrompt(message.content);
-                      if (routeInfo.isRouting) {
-                        return (
-                          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm sm:text-base opacity-90">
-                            <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0"></div>
-                            <span>Forwarding</span>
-                            <span className="font-semibold break-all">
-                              &ldquo;{routeInfo.prompt}&rdquo;
-                            </span>
-                            <span>to</span>
-                            {routeInfo.model && ( // Conditionally render if model is defined
-                              <span className="font-semibold flex items-center gap-1 shrink-0">
-                                <ProviderIcon
-                                  model={routeInfo.model}
-                                  className="w-3.5 h-3.5"
-                                />
-                                {getModelDisplayName(routeInfo.model)}
+                      // Only show forwarding UI for the dedicated forwardingMessage, not regular messages
+                      const isForwardingMessage = forwardingMessage && message === forwardingMessage;
+                      if (isForwardingMessage) {
+                        const routeInfo = parseRoutePrompt(message.content);
+                        if (routeInfo.isRouting) {
+                          return (
+                            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm sm:text-base opacity-90">
+                              <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0"></div>
+                              <span>Forwarding</span>
+                              <span className="font-semibold break-all">
+                                &ldquo;{routeInfo.prompt}&rdquo;
                               </span>
-                            )}
-                          </div>
-                        );
+                              <span>to</span>
+                              {routeInfo.model && ( // Conditionally render if model is defined
+                                <span className="font-semibold flex items-center gap-1 shrink-0">
+                                  <ProviderIcon
+                                    model={routeInfo.model}
+                                    className="w-3.5 h-3.5"
+                                  />
+                                  {getModelDisplayName(routeInfo.model)}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }
                       }
                       // Regular AI response content
                       return (
