@@ -69,7 +69,22 @@ export default function ChatSidebar({
           ? "border-gray-700 bg-gray-800"
           : "border-gray-200 bg-gray-50"
       } flex flex-col h-full overflow-y-auto`}
+      style={{
+        msOverflowStyle: 'none', /* IE and Edge */
+        scrollbarWidth: 'none', /* Firefox */
+      }}
     >
+      <style jsx>{`
+        .overflow-y-auto::-webkit-scrollbar {
+          display: none; /* Chrome, Safari and Opera */
+        }
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+          display: none;
+        }
+        .overflow-y-auto::-webkit-scrollbar-track {
+          display: none;
+        }
+      `}</style>
       {/* Top section: Logo and Title */}
       <div className="flex items-center mb-4 sm:mb-6">
         <Image

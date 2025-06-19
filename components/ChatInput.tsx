@@ -59,6 +59,15 @@ export default function ChatInput({
   const [showImageSuggestion, setShowImageSuggestion] = useState(false);
   const [dismissedImageSuggestion, setDismissedImageSuggestion] = useState(false);
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"; // Reset height to recalculate
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [prompt]);
+
   useEffect(() => {
     if (isImageGenerationModel(selectedModel)) {
       const provider = getProviderFromModelId(selectedModel);
@@ -364,8 +373,8 @@ export default function ChatInput({
 
           <div className="flex items-center space-x-3 flex-1">
             <div className="flex-1 relative">
-              <input
-                type="text"
+              <textarea
+                ref={textareaRef}
                 placeholder={
                   isImageModel && !hasRequiredKey
                     ? "Configure API key in settings to generate images..."
@@ -373,11 +382,15 @@ export default function ChatInput({
                 }
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) =>
-                  e.key === "Enter" && canSendMessage && handleSendMessage()
-                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && canSendMessage) {
+                    e.preventDefault(); // Prevent newline on Enter
+                    handleSendMessage();
+                  }
+                }}
                 disabled={isImageModel && !hasRequiredKey}
-                className={`w-full px-4 py-3 rounded-xl text-base transition-all duration-200 ${
+                rows={1} // Start with one row
+                className={`w-full px-4 py-3 rounded-xl text-base transition-all duration-200 resize-none overflow-hidden ${
                   isDarkTheme
                     ? "bg-gray-700 text-white border-gray-600 placeholder-gray-400 focus:bg-gray-650"
                     : "bg-white text-gray-900 border-gray-200 placeholder-gray-500 focus:bg-gray-50"
