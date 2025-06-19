@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Download, ExternalLink, Copy, X, ZoomIn, ZoomOut, RotateCw, AlertTriangle } from 'lucide-react';
 
 interface ImageViewerProps {
@@ -17,6 +17,16 @@ export default function ImageViewer({ isOpen, onClose, imageUrl, isDarkTheme }: 
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Reset states when modal opens or imageUrl changes
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoading(!imageUrl.startsWith('data:')); // Base64 images don't need loading
+      setImageError(false);
+      setZoom(100);
+      setRotation(0);
+    }
+  }, [isOpen, imageUrl]);
+
   if (!isOpen) return null;
 
   const handleImageLoad = () => {
@@ -32,19 +42,30 @@ export default function ImageViewer({ isOpen, onClose, imageUrl, isDarkTheme }: 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const response = await fetch(imageUrl);
-      if (!response.ok) {
-        throw new Error('Image may have expired or is no longer available');
+      if (imageUrl.startsWith('data:')) {
+        // Handle base64 data URLs directly
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = `cyris-ai-generated-image-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // Handle external URLs
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+          throw new Error('Image may have expired or is no longer available');
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `cyris-ai-generated-image-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
       }
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `cyris-ai-generated-image-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading image:', error);
       alert('Failed to download image. The image may have expired or is no longer available.');
