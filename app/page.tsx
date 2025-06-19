@@ -198,23 +198,22 @@ export default function Home() {
     setCurrentMessages((messages) => [...messages, userMessage]);
 
     if (selectedModel === "autopick") {
-      setForwardingMessage({
-        role: "assistant",
-        content: `<routePrompt prompt="${trimmedPrompt}" model="Selecting model..."/>`,
-      });
-
+      // Don't show forwarding message immediately - wait to see if routing actually occurs
       setTimeout(async () => {
         try {
-          const actualModel = await getBestModel(trimmedPrompt);
-          setForwardingMessage({
-            role: "assistant",
-            content: `<routePrompt prompt="${trimmedPrompt}" model="${actualModel}"/>`,
-          });
+          const routerResponse = await getBestModel(trimmedPrompt);
+          const routeInfo = parseRoutePrompt(routerResponse || '');
+          
+          // Only show forwarding message if routing actually occurred
+          if (routeInfo.isRouting && routeInfo.model) {
+            setForwardingMessage({
+              role: "assistant",
+              content: `<routePrompt prompt="${trimmedPrompt}" model="${routeInfo.model}"/>`,
+            });
+          }
         } catch (error) {
-          setForwardingMessage({
-            role: "assistant",
-            content: `<routePrompt prompt="${trimmedPrompt}" model="openai/gpt-4o-mini"/>`,
-          });
+          // Don't show forwarding message on error
+          console.error('Error getting routing decision:', error);
         }
       }, 200);
     } else {
