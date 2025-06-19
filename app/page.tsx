@@ -14,6 +14,12 @@ import { useSession } from "next-auth/react";
 import { ChatService, ChatData } from "@/lib/chatService";
 import { parseRoutePrompt } from "@/lib/utils";
 
+declare global {
+  interface Window {
+    versatailor: (eventName: string, eventData?: any) => void;
+  }
+}
+
 export default function Home() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -207,7 +213,9 @@ export default function Home() {
   async function handleSendMessage() {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) return;
-
+    window?.versatailor("message_sent", {
+      description: "User sent a message",
+    });
     const userMessage = { role: "user", content: trimmedPrompt };
 
     setCurrentMessages((messages) => [...messages, userMessage]);
